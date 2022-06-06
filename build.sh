@@ -12,3 +12,6 @@ tsc -p tsconfig.json --noEmit
 [ -d dist ] && rm -rf dist
 babel src --extensions ".ts,.js" -s inline -d dist
 cp package.json dist/
+cp package-lock.json dist/
+cd dist
+npm install --production

@@ -7,7 +7,8 @@
     "call": "node bin/local.js",
     "build": "./build.sh",
     "deploy": "./deploy.sh",
-    "server": "[ -f server.js ] && node server || ts-node src/server"
+    "server": "[ -f server.js ] && node server || ts-node src/server",
+    "server:dist": "cd dist && node server"
   },
   "author": "",
   "license": "ISC",
