@@ -5,6 +5,7 @@ import { Response } from "./utils";
 const server = createJsonRpcServer();
 
 export async function main(body) {
+  console.log("body", body);
   const result = await server.receive(body);
   if (result) {
     return result;

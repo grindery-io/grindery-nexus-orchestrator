@@ -33,15 +33,15 @@ async function handleHttp(req, res) {
       return res.status(415).send("Unsupported Media Type (Not UTF-8)");
     }
   }
+  if (!req.body) {
+    return res.status(400).send("Bad request");
+  }
   if (typeof req.body === "string") {
     try {
       req.body = JSON.parse(req.body);
     } catch (e) {
       return res.status(415).send("Unsupported Media Type");
     }
-  }
-  if (!req.body) {
-    return res.status(400).send("Bad request");
   }
   req.query = req.query || {};
   if (
