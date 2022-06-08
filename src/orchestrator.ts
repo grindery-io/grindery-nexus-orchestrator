@@ -118,6 +118,10 @@ class RuntimeWorkflow {
     this.running = true;
     await this.setupTrigger();
   }
+  stop() {
+    this.running = false;
+    this.triggerSocket?.close();
+  }
   async keepAlive() {
     if (!this.running) {
       return;
@@ -321,5 +325,9 @@ export async function deleteWorkflow({ userAccountId, key }: { userAccountId: st
     userAccountId,
     key,
   });
+  if (allWorkflows.has(key)) {
+    allWorkflows.get(key)?.stop();
+    allWorkflows.delete(key);
+  }
   return { deleted: result.deletedCount === 1 };
 }
