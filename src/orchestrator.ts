@@ -284,7 +284,7 @@ export async function createWorkflow({ userAccountId, workflow }: { userAccountI
   verifyAccountId(userAccountId);
   const collection = await getCollection("workflows");
   const key = uuidv4();
-  const result = await collection.insertOne({
+  await collection.insertOne({
     key,
     userAccountId,
     workflow: JSON.stringify(workflow),
@@ -298,7 +298,7 @@ export async function createWorkflow({ userAccountId, workflow }: { userAccountI
     console.error(e);
     Sentry.captureException(e);
   });
-  return result;
+  return { added: true };
 }
 
 export async function listWorkflows({ userAccountId }: { userAccountId: string }) {
