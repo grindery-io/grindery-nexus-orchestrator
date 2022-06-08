@@ -3,18 +3,110 @@ import * as Sentry from "@sentry/node";
 
 import { InvalidParamsError } from "./jsonrpc";
 import { getCollection } from "./db";
-import { ConnectorSchema, WorkflowSchema } from "./types";
+import { ConnectorSchema, FieldSchema, WorkflowSchema } from "./types";
 import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "./ws";
 import { replaceTokens } from "./utils";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
   if (typeof accountId !== "string" || !/^[-a-z0-9]{3,8}:[-a-zA-Z0-9]{1,32}:[a-zA-Z0-9]{1,64}$/.test(accountId)) {
-    throw new InvalidParamsError("Invalid DID");
+    throw new InvalidParamsError("Invalid CAIP-10 account ID");
   }
 }
 async function getConnectorSchema(_connectorId: string): Promise<ConnectorSchema> {
+  if (_connectorId === "helloWorld") {
+    return {
+      name: "Hello World",
+      version: "1.0.0",
+      platformVersion: "1.0.0",
+      triggers: [
+        {
+          key: "helloWorldTrigger",
+          name: "Hello World Trigger",
+          display: {
+            label: "Hello World Trigger",
+            description: "This is a test trigger",
+          },
+          operation: {
+            type: "polling",
+            operation: {
+              url: "wss://gnexus-connector-helloworld.herokuapp.com/",
+            },
+            inputFields: [
+              {
+                key: "interval",
+                label: "Delay before signal in milliseconds",
+                type: "number",
+                required: true,
+                default: "10000",
+              },
+              {
+                key: "recurring",
+                label: "Recurring",
+                type: "boolean",
+                required: true,
+                default: "true",
+              },
+            ],
+            outputFields: [
+              {
+                key: "random",
+                label: "A random string",
+              },
+            ],
+            sample: { random: "abc" },
+          },
+        },
+      ],
+      actions: [
+        {
+          key: "helloWorldAction",
+          name: "Hello World Action",
+          display: {
+            label: "Hello World Action",
+            description: "This is a test action",
+          },
+          operation: {
+            type: "api",
+            operation: {
+              url: "wss://gnexus-connector-helloworld.herokuapp.com/",
+            },
+            inputFields: [
+              {
+                key: "message",
+                label: "Message",
+                type: "number",
+                required: true,
+                default: "Hello!",
+              },
+            ],
+            sample: {},
+          },
+        },
+      ],
+    };
+  }
   throw new Error("Not implemented");
+}
+function sanitizeInput(input: { [key: string]: unknown }, fields: FieldSchema[]) {
+  for (const field of fields) {
+    if (!(field.key in input)) {
+      if (field.default) {
+        input[field.key] = field.default;
+      } else if (field.required) {
+        throw new Error(`Missing required field: ${field.key}`);
+      }
+    }
+    const fieldValue = input[field.key];
+    if (typeof fieldValue === "string") {
+      if (field.type === "number") {
+        input[field.key] = parseFloat(fieldValue.trim());
+      } else if (field.type === "boolean") {
+        input[field.key] = fieldValue.trim() === "true";
+      }
+    }
+  }
+  return input;
 }
 class RuntimeWorkflow {
   private running = false;
@@ -60,7 +152,16 @@ class RuntimeWorkflow {
     let index = 0;
     for (const step of this.workflow.actions) {
       console.debug(`[${this.key}] Running step ${index}: ${step.connector}/${step.operation}`);
-      const input = replaceTokens(step.input || {}, context);
+      const connector = await getConnectorSchema(step.connector);
+      const action = connector.actions?.find((action) => action.key === step.operation);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let error: any = undefined;
+      let input;
+      try {
+        input = sanitizeInput(replaceTokens(step.input || {}, context), action?.operation?.inputFields || []);
+      } catch (e) {
+        error = e;
+      }
       await logCollection.insertOne({
         workflowKey: this.key,
         sessionId,
@@ -68,11 +169,13 @@ class RuntimeWorkflow {
         stepIndex: index,
         input,
         startedAt: Date.now(),
+        error: error?.toString(),
       });
-      const connector = await getConnectorSchema(step.connector);
-      const action = connector.actions?.find((action) => action.key === step.operation);
       if (!action) {
         throw new Error("Invalid action");
+      }
+      if (error) {
+        return;
       }
       if (action.operation.type === "blockchain:call") {
         throw new Error(`Not implemented: ${action.operation.type}`);
@@ -146,7 +249,7 @@ class RuntimeWorkflow {
         key: this.workflow.trigger.operation,
         sessionId,
         credentials: this.workflow.trigger.credentials,
-        fields: this.workflow.trigger.input,
+        fields: sanitizeInput(this.workflow.trigger.input, trigger.operation.inputFields || []),
       });
       console.debug(
         `[${this.key}] Started trigger ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`
