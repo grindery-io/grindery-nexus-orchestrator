@@ -124,7 +124,7 @@ class RuntimeWorkflow {
     }
     try {
       await this.triggerSocket?.request("ping");
-      setTimeout(this.keepAlive.bind(this), 60000);
+      setTimeout(this.keepAlive.bind(this), parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000);
     } catch (e) {
       console.warn(`[${this.key}] Failed to keep alive: ${e.toString()}`);
       this.triggerSocket?.close();
