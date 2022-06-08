@@ -88,8 +88,9 @@ async function getConnectorSchema(_connectorId: string): Promise<ConnectorSchema
   }
   throw new Error("Not implemented");
 }
-function sanitizeInput(input: { [key: string]: unknown }, fields: FieldSchema[]) {
-  for (const field of fields) {
+function sanitizeInput(input?: { [key: string]: unknown }, fields?: FieldSchema[]) {
+  input = input || {};
+  for (const field of fields || []) {
     if (!(field.key in input)) {
       if (field.default) {
         input[field.key] = field.default;
