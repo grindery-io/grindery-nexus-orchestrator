@@ -22,7 +22,31 @@ export class JsonRpcWebSocket {
     this.serverAndClient = new JSONRPCServerAndClient(
       new JSONRPCServer(),
       new JSONRPCClient(async (request) => {
-        this.ws.send(JSON.stringify(request));
+        if (this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify(request));
+          return;
+        }
+        if (this.ws.readyState !== WebSocket.CONNECTING) {
+          throw new Error("WebSocket is not open");
+        }
+        await new Promise((resolve, reject) => {
+          const onError = function (e) {
+            reject(e || new Error("Failed to send request to WebSocket"));
+          };
+          this.ws.on("error", onError);
+          this.ws.on("close", onError);
+          this.ws.once("open", () => {
+            this.ws.off("error", onError);
+            this.ws.off("close", onError);
+            try {
+              this.ws.send(JSON.stringify(request));
+            } catch (error) {
+              reject(error);
+              return;
+            }
+            resolve(undefined);
+          });
+        });
       })
     );
     this.ws.onmessage = (event) => {
