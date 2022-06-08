@@ -202,8 +202,10 @@ class RuntimeWorkflow {
               executionId,
             },
             {
-              error: e.toString(),
-              endedAt: Date.now(),
+              $set: {
+                error: e.toString(),
+                endedAt: Date.now(),
+              },
             }
           );
           return;
@@ -216,8 +218,10 @@ class RuntimeWorkflow {
             executionId,
           },
           {
-            output: nextInput,
-            endedAt: Date.now(),
+            $set: {
+              output: nextInput,
+              endedAt: Date.now(),
+            },
           }
         );
       } else {
