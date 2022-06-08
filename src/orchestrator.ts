@@ -75,7 +75,7 @@ async function getConnectorSchema(_connectorId: string): Promise<ConnectorSchema
               {
                 key: "message",
                 label: "Message",
-                type: "number",
+                type: "string",
                 required: true,
                 default: "Hello!",
               },
