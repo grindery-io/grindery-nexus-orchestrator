@@ -298,7 +298,7 @@ export async function createWorkflow({ userAccountId, workflow }: { userAccountI
     console.error(e);
     Sentry.captureException(e);
   });
-  return { added: true };
+  return { key };
 }
 
 export async function listWorkflows({ userAccountId }: { userAccountId: string }) {

@@ -1,0 +1,15 @@
+{
+  "title": "Test workflow",
+  "trigger": {
+    "type": "trigger",
+    "connector": "helloWorld",
+    "operation": "helloWorldTrigger"
+  },
+  "actions": [
+    {
+      "type": "action",
+      "connector": "helloWorld",
+      "operation": "helloWorldAction"
+    }
+  ]
+}
