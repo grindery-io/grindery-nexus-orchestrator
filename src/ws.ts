@@ -6,6 +6,7 @@ type WebSocketPayloadCommon = {
   sessionId: string;
 };
 export type ConnectorInput = WebSocketPayloadCommon & {
+  executionId?: string;
   credentials: unknown;
   fields: unknown;
 };

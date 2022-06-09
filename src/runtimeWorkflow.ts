@@ -195,6 +195,7 @@ export class RuntimeWorkflow {
           const result = (await socket.request<ConnectorInput>("runAction", {
             key: step.operation,
             sessionId,
+            executionId,
             credentials: step.credentials,
             fields: input,
           })) as ConnectorOutput;
