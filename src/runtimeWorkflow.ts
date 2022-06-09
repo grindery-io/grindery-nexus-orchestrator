@@ -72,7 +72,14 @@ async function getConnectorSchema(_connectorId: string): Promise<ConnectorSchema
                 default: "Hello!",
               },
             ],
-            sample: {},
+            outputFields: [
+              {
+                key: "message",
+              },
+            ],
+            sample: {
+              message: "Hello World!",
+            },
           },
         },
       ],

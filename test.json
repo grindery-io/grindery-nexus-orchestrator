@@ -3,13 +3,28 @@
   "trigger": {
     "type": "trigger",
     "connector": "helloWorld",
-    "operation": "helloWorldTrigger"
+    "operation": "helloWorldTrigger",
+    "input": {
+      "interval": "30000",
+      "recurring": "true"
+    }
   },
   "actions": [
     {
       "type": "action",
       "connector": "helloWorld",
-      "operation": "helloWorldAction"
+      "operation": "helloWorldAction",
+      "input": {
+        "message": "Hello {{trigger.random}}!"
+      }
+    },
+    {
+      "type": "action",
+      "connector": "helloWorld",
+      "operation": "helloWorldAction",
+      "input": {
+        "message": "Hello x2 {{trigger.random}}! {{step0.message}}"
+      }
     }
   ]
 }
