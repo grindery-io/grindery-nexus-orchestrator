@@ -120,6 +120,7 @@ export class RuntimeWorkflow {
   stop() {
     this.running = false;
     this.triggerSocket?.close();
+    console.debug(`[${this.key}] Stopped`);
   }
   async keepAlive() {
     if (!this.running) {
