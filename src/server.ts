@@ -7,6 +7,8 @@ app.use(bodyParser.json());
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 app.post("/", require("./index").http);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+app.options(/.*/, require("./index").http);
 
 const port = parseInt(process.env.PORT || "", 10) || 3000;
 
