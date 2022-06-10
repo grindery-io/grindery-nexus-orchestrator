@@ -3,8 +3,8 @@ import * as Sentry from "@sentry/node";
 
 import { InvalidParamsError } from "./jsonrpc";
 import { getCollection } from "./db";
-import { WorkflowSchema } from "./types";
-import { RuntimeWorkflow } from "./runtimeWorkflow";
+import { OperationSchema, WorkflowSchema } from "./types";
+import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -72,4 +72,17 @@ export async function deleteWorkflow({ userAccountId, key }: { userAccountId: st
     allWorkflows.delete(key);
   }
   return { deleted: result.deletedCount === 1 };
+}
+
+export async function testAction({
+  userAccountId,
+  step,
+  input,
+}: {
+  userAccountId: string;
+  step: OperationSchema;
+  input: unknown;
+}) {
+  verifyAccountId(userAccountId);
+  return await runSingleAction({ step, input });
 }

@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import * as Sentry from "@sentry/node";
 import { getCollection } from "./db";
-import { ConnectorSchema, FieldSchema, WorkflowSchema } from "./types";
+import { ActionSchema, ConnectorSchema, FieldSchema, OperationSchema, WorkflowSchema } from "./types";
 import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "./ws";
 import { replaceTokens } from "./utils";
 
@@ -108,6 +108,59 @@ function sanitizeInput(input?: { [key: string]: unknown }, fields?: FieldSchema[
   }
   return input;
 }
+
+async function runAction({
+  action,
+  input,
+  step,
+  sessionId,
+  executionId,
+}: {
+  action: ActionSchema;
+  input: unknown;
+  step: OperationSchema;
+  sessionId: string;
+  executionId: string;
+}) {
+  if (action.operation.type === "blockchain:call") {
+    throw new Error(`Not implemented: ${action.operation.type}`);
+  } else if (action.operation.type === "api") {
+    const url = action.operation.operation.url;
+    if (!/^wss?:\/\//i.test(url)) {
+      throw new Error(`Unsupported action URL: ${url}`);
+    }
+    const socket = new JsonRpcWebSocket(url);
+    try {
+      const result = (await socket.request<ConnectorInput>("runAction", {
+        key: step.operation,
+        sessionId,
+        executionId,
+        credentials: step.credentials,
+        fields: input,
+      })) as ConnectorOutput;
+      return result.payload;
+    } finally {
+      socket.close();
+    }
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    throw new Error(`Invalid action type: ${(action.operation as any).type}`);
+  }
+}
+export async function runSingleAction({ step, input }: { step: OperationSchema; input: unknown }) {
+  const connector = await getConnectorSchema(step.connector);
+  const action = connector.actions?.find((action) => action.key === step.operation);
+  if (!action) {
+    throw new Error("Invalid action");
+  }
+  return await runAction({
+    action,
+    input,
+    step,
+    sessionId: uuidv4(),
+    executionId: uuidv4(),
+  });
+}
 export class RuntimeWorkflow {
   private running = false;
   private triggerSocket: JsonRpcWebSocket | null = null;
@@ -182,57 +235,42 @@ export class RuntimeWorkflow {
       if (error) {
         return;
       }
-      if (action.operation.type === "blockchain:call") {
-        throw new Error(`Not implemented: ${action.operation.type}`);
-      } else if (action.operation.type === "api") {
-        const url = action.operation.operation.url;
-        if (!/^wss?:\/\//i.test(url)) {
-          throw new Error(`Unsupported action URL: ${url}`);
-        }
-        const socket = new JsonRpcWebSocket(url);
-        let nextInput: unknown;
-        try {
-          const result = (await socket.request<ConnectorInput>("runAction", {
-            key: step.operation,
-            sessionId,
-            executionId,
-            credentials: step.credentials,
-            fields: input,
-          })) as ConnectorOutput;
-          nextInput = result.payload;
-        } catch (e) {
-          console.debug(`[${this.key}] Failed step ${index}: ${e.toString()}`);
-          await logCollection.updateOne(
-            {
-              executionId,
-            },
-            {
-              $set: {
-                error: e.toString(),
-                endedAt: Date.now(),
-              },
-            }
-          );
-          return;
-        } finally {
-          socket.close();
-        }
-        context[`step${index}`] = nextInput;
+      let nextInput: unknown;
+      try {
+        nextInput = await runAction({
+          action,
+          input,
+          step,
+          sessionId,
+          executionId,
+        });
+      } catch (e) {
+        console.debug(`[${this.key}] Failed step ${index}: ${e.toString()}`);
         await logCollection.updateOne(
           {
             executionId,
           },
           {
             $set: {
-              output: nextInput,
+              error: e.toString(),
               endedAt: Date.now(),
             },
           }
         );
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        throw new Error(`Invalid action type: ${(action.operation as any).type}`);
+        return;
       }
+      context[`step${index}`] = nextInput;
+      await logCollection.updateOne(
+        {
+          executionId,
+        },
+        {
+          $set: {
+            output: nextInput,
+            endedAt: Date.now(),
+          },
+        }
+      );
       index++;
     }
     console.debug(`[${this.key}] Completed`);
