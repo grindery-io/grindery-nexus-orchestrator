@@ -5,85 +5,200 @@ import { ActionSchema, ConnectorSchema, FieldSchema, OperationSchema, WorkflowSc
 import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "./ws";
 import { replaceTokens } from "./utils";
 
-async function getConnectorSchema(_connectorId: string): Promise<ConnectorSchema> {
-  if (_connectorId === "helloWorld") {
-    return {
-      name: "Hello World",
-      version: "1.0.0",
-      platformVersion: "1.0.0",
-      triggers: [
-        {
-          key: "helloWorldTrigger",
-          name: "Hello World Trigger",
-          display: {
-            label: "Hello World Trigger",
-            description: "This is a test trigger",
-          },
+const schemas: { [key: string]: ConnectorSchema } = {
+  helloWorld: {
+    key: "helloWorld",
+    name: "Hello World",
+    version: "1.0.0",
+    platformVersion: "1.0.0",
+    triggers: [
+      {
+        key: "helloWorldTrigger",
+        name: "Hello World Trigger",
+        display: {
+          label: "Hello World Trigger",
+          description: "This is a test trigger",
+        },
+        operation: {
+          type: "polling",
           operation: {
-            type: "polling",
-            operation: {
-              url: "wss://gnexus-connector-helloworld.herokuapp.com/",
+            url: "wss://gnexus-connector-helloworld.herokuapp.com/",
+          },
+          inputFields: [
+            {
+              key: "interval",
+              label: "Delay before signal in milliseconds",
+              type: "number",
+              required: true,
+              default: "10000",
             },
-            inputFields: [
-              {
-                key: "interval",
-                label: "Delay before signal in milliseconds",
-                type: "number",
-                required: true,
-                default: "10000",
-              },
-              {
-                key: "recurring",
-                label: "Recurring",
-                type: "boolean",
-                required: true,
-                default: "true",
-              },
-            ],
-            outputFields: [
-              {
-                key: "random",
-                label: "A random string",
-              },
-            ],
-            sample: { random: "abc" },
+            {
+              key: "recurring",
+              label: "Recurring",
+              type: "boolean",
+              required: true,
+              default: "true",
+            },
+          ],
+          outputFields: [
+            {
+              key: "random",
+              label: "A random string",
+            },
+          ],
+          sample: { random: "abc" },
+        },
+      },
+    ],
+    actions: [
+      {
+        key: "helloWorldAction",
+        name: "Hello World Action",
+        display: {
+          label: "Hello World Action",
+          description: "This is a test action",
+        },
+        operation: {
+          type: "api",
+          operation: {
+            url: "wss://gnexus-connector-helloworld.herokuapp.com/",
+          },
+          inputFields: [
+            {
+              key: "message",
+              label: "Message",
+              type: "string",
+              required: true,
+              default: "Hello!",
+            },
+          ],
+          outputFields: [
+            {
+              key: "message",
+            },
+          ],
+          sample: {
+            message: "Hello World!",
           },
         },
-      ],
-      actions: [
-        {
-          key: "helloWorldAction",
-          name: "Hello World Action",
-          display: {
-            label: "Hello World Action",
-            description: "This is a test action",
-          },
+      },
+    ],
+  },
+  googleSheets: {
+    key: "googleSheets",
+    name: "Google Sheets",
+    version: "1.0.0",
+    platformVersion: "1",
+    triggers: [
+      {
+        key: "newSpreadsheetRow",
+        name: "New spreadsheet row",
+        display: {
+          label: "New spreadsheet row",
+          description: "4",
+          instructions: "",
+        },
+        operation: {
+          type: "polling",
           operation: {
-            type: "api",
-            operation: {
-              url: "wss://gnexus-connector-helloworld.herokuapp.com/",
+            url: "wss://grindery-gsheet-connector.herokuapp.com/ws/",
+          },
+          inputFields: [
+            {
+              key: "spreadsheet",
+              label: "Spreadsheet",
+              helpText: "",
+              type: "string",
+              required: true,
+              placeholder: "Choose sheet...",
+              choices: [
+                {
+                  value: "demo_sheet_1",
+                  label: "Demo Sheet 1",
+                  sample: "demo_sheet_1",
+                },
+                {
+                  value: "demo_sheet_2",
+                  label: "Demo Sheet 2",
+                  sample: "demo_sheet_2",
+                },
+              ],
             },
-            inputFields: [
-              {
-                key: "message",
-                label: "Message",
-                type: "string",
-                required: true,
-                default: "Hello!",
-              },
-            ],
-            outputFields: [
-              {
-                key: "message",
-              },
-            ],
-            sample: {
-              message: "Hello World!",
+            {
+              key: "worksheet",
+              label: "Worksheet",
+              helpText: "You must have column headers",
+              type: "string",
+              required: true,
+              placeholder: "Choose sheet...",
+              choices: [
+                {
+                  value: "demo_worksheet_1",
+                  label: "Demo Worksheet 1",
+                  sample: "demo_worksheet_1",
+                },
+                {
+                  value: "demo_worksheet_2",
+                  label: "Demo Worksheet 2",
+                  sample: "demo_worksheet_2",
+                },
+                {
+                  value: "demo_worksheet_3",
+                  label: "Demo Worksheet 3",
+                  sample: "demo_worksheet_3",
+                },
+              ],
             },
+          ],
+          outputFields: [
+            {
+              key: "newRowColumns",
+              type: "string",
+              list: true,
+            },
+          ],
+          sample: {
+            newRowColumns: ["Column A data", "Column B data", "Column C data", "Column D data"],
           },
         },
-      ],
-    };
+      },
+    ],
+    authentication: {
+      type: "oauth2",
+      test: {
+        method: "GET",
+        url: "https://www.googleapis.com/oauth2/v3/userinfo",
+      },
+      oauth2Config: {
+        authorizeUrl:
+          "https://accounts.google.com/o/oauth2/v2/auth?prompt=consent&response_type=code&client_id=676778012745-q5lg8up8nq94qet4fjhs3ftvpgd4nalv.apps.googleusercontent.com&scope=https://www.googleapis.com/auth/spreadsheets+https://www.googleapis.com/auth/userinfo.email+https://www.googleapis.com/auth/spreadsheets.readonly+https://www.googleapis.com/auth/drive&access_type=offline",
+
+        getAccessToken: {
+          method: "POST",
+          url: "https://oauth2.googleapis.com/token",
+          body: {
+            client_id: "676778012745-q5lg8up8nq94qet4fjhs3ftvpgd4nalv.apps.googleusercontent.com",
+            client_secret: "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",
+            grant_type: "authorization_code",
+          },
+        },
+        refreshAccessToken: {
+          method: "POST",
+          url: "https://oauth2.googleapis.com/token",
+          body: {
+            client_id: "676778012745-q5lg8up8nq94qet4fjhs3ftvpgd4nalv.apps.googleusercontent.com",
+            client_secret: "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",
+            grant_type: "refresh_token",
+          },
+        },
+      },
+    },
+  },
+};
+
+async function getConnectorSchema(connectorId: string): Promise<ConnectorSchema> {
+  if (connectorId in schemas) {
+    return schemas[connectorId];
   }
   throw new Error("Not implemented");
 }

@@ -161,6 +161,7 @@ export type ActionSchema = {
   operation: APICallOperationSchema | ChainCallOperationSchema;
 };
 export type ConnectorSchema = {
+  key: string;
   name: string;
   version: string;
   platformVersion: string;
