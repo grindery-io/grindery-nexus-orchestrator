@@ -69,7 +69,27 @@ export class JsonRpcWebSocket {
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   request<T extends JSONRPCParams, U = unknown>(method: string, params?: T, clientParams?: any): PromiseLike<U> {
-    return this.serverAndClient.timeout(10000).request(method, params, clientParams);
+    let running = true;
+    const keepAlive = () => {
+      if (!running) {
+        return;
+      }
+      setTimeout(() => {
+        if (!running) {
+          return;
+        }
+        this.serverAndClient
+          .timeout(5000)
+          .request("ping")
+          .then(keepAlive, () => console.error(`WebSocket connection is closed while calling ${method}`));
+      }, 5000);
+    };
+    keepAlive();
+    try {
+      return this.serverAndClient.timeout(60000).request(method, params, clientParams);
+    } finally {
+      running = false;
+    }
   }
   close() {
     this.ws.close();

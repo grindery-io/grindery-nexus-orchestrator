@@ -194,6 +194,145 @@ const schemas: { [key: string]: ConnectorSchema } = {
       },
     },
   },
+  web3: {
+    key: "web3",
+    name: "Web3 connector",
+    version: "1.0.0",
+    platformVersion: "1.0.0",
+    triggers: [
+      {
+        key: "newEvent",
+        name: "New smart contract event",
+        display: {
+          label: "New smart contract event",
+          description: "Trigger when a new event on specified smart contract is received",
+        },
+        operation: {
+          type: "polling",
+          operation: {
+            url: "wss://gnexus-connector-web3.herokuapp.com/",
+          },
+          inputFields: [
+            {
+              key: "chain",
+              label: "Name of the blockchain",
+              type: "string",
+              required: true,
+              default: "eth",
+            },
+            {
+              key: "contractAddress",
+              label: "Contract address",
+              type: "string",
+              placeholder: "0x...",
+              required: true,
+            },
+            {
+              key: "eventDeclaration",
+              label: "Event declaration",
+              type: "string",
+              placeholder: "event EventName(address indexed param1, uint256 param2)",
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "newTransaction",
+        name: "New transaction",
+        display: {
+          label: "New transaction",
+          description: "Trigger when a new transaction is received",
+        },
+        operation: {
+          type: "polling",
+          operation: {
+            url: "wss://gnexus-connector-web3.herokuapp.com/",
+          },
+          inputFields: [
+            {
+              key: "chain",
+              label: "Name of the blockchain",
+              type: "string",
+              required: true,
+              default: "eth",
+            },
+            {
+              key: "from",
+              label: "From address",
+              type: "string",
+              placeholder: "0x...",
+              required: false,
+            },
+            {
+              key: "to",
+              label: "To address",
+              type: "string",
+              placeholder: "0x...",
+              required: false,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+    ],
+    actions: [
+      {
+        key: "callSmartContract",
+        name: "Call smart contract function",
+        display: {
+          label: "Call smart contract function",
+          description: "Call a function on a smart contract",
+        },
+        operation: {
+          type: "api",
+          operation: {
+            url: "wss://gnexus-connector-web3.herokuapp.com/",
+          },
+          inputFields: [
+            {
+              key: "chain",
+              label: "Name of the blockchain",
+              type: "string",
+              required: true,
+              default: "eth",
+            },
+            {
+              key: "contractAddress",
+              label: "Contract address",
+              type: "string",
+              placeholder: "0x...",
+              required: true,
+            },
+            {
+              key: "functionDeclaration",
+              label: "Function declaration",
+              type: "string",
+              placeholder: "function functionName(address param1, uint256 param2)",
+              required: true,
+            },
+            {
+              key: "maxFeePerGas",
+              label: "Max fee per gas",
+              type: "number",
+              required: false,
+            },
+            {
+              key: "maxPriorityFeePerGas",
+              label: "Max priority fee per gas",
+              type: "number",
+              required: false,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+    ],
+  },
 };
 
 async function getConnectorSchema(connectorId: string): Promise<ConnectorSchema> {
@@ -237,10 +376,29 @@ async function runAction({
   sessionId: string;
   executionId: string;
 }) {
-  if (action.operation.type === "blockchain:call") {
-    throw new Error(`Not implemented: ${action.operation.type}`);
-  } else if (action.operation.type === "api") {
-    const url = action.operation.operation.url;
+  let actionOp = action.operation;
+  if (actionOp.type === "blockchain:call") {
+    const web3Connector = await getConnectorSchema("web3");
+    if (!web3Connector) {
+      throw new Error("Web3 connector not found");
+    }
+    const web3Action = web3Connector.actions?.find((a) => a.key === "callSmartContract");
+    if (!web3Action) {
+      throw new Error("Web3 call action not found");
+    }
+    const inputObj = input as { [key: string]: unknown };
+    input = {
+      chain: inputObj._grinderyChain || "eth",
+      contractAddress: inputObj._grinderyContractAddress,
+      functionDeclaration: actionOp.signature,
+      parameters: inputObj,
+      maxFeePerGas: inputObj._grinderyMaxFeePerGas,
+      maxPriorityFeePerGas: inputObj._grinderyMaxPriorityFeePerGas,
+    };
+    actionOp = web3Action.operation;
+  }
+  if (actionOp.type === "api") {
+    const url = actionOp.operation.url;
     if (!/^wss?:\/\//i.test(url)) {
       throw new Error(`Unsupported action URL: ${url}`);
     }
@@ -259,7 +417,7 @@ async function runAction({
     }
   } else {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    throw new Error(`Invalid action type: ${(action.operation as any).type}`);
+    throw new Error(`Invalid action type: ${actionOp.type}`);
   }
 }
 export async function runSingleAction({ step, input }: { step: OperationSchema; input: unknown }) {
@@ -392,13 +550,29 @@ export class RuntimeWorkflow {
   }
   async setupTrigger() {
     const triggerConnector = await getConnectorSchema(this.workflow.trigger.connector);
-    const trigger = triggerConnector.triggers?.find((trigger) => trigger.key === this.workflow.trigger.operation);
+    let trigger = triggerConnector.triggers?.find((trigger) => trigger.key === this.workflow.trigger.operation);
     if (!trigger) {
       throw new Error(`Trigger not found: ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`);
     }
+    let fields = sanitizeInput(this.workflow.trigger.input, trigger.operation.inputFields || []);
+    if (trigger.operation.type === "blockchain:event") {
+      const web3Connector = await getConnectorSchema("web3");
+      if (!web3Connector) {
+        throw new Error("Web3 connector not found");
+      }
+      const web3Trigger = web3Connector.triggers?.find((a) => a.key === "newEvent");
+      if (!web3Trigger) {
+        throw new Error("Web3 trigger not found");
+      }
+      fields = {
+        chain: fields._grinderyChain || "eth",
+        contractAddress: fields._grinderyContractAddress,
+        eventDeclaration: trigger.operation.signature,
+        parameterFilters: fields,
+      };
+      trigger = web3Trigger;
+    }
     if (trigger.operation.type === "hook") {
-      throw new Error(`Not implemented: ${trigger.operation.type}`);
-    } else if (trigger.operation.type === "blockchain:event") {
       throw new Error(`Not implemented: ${trigger.operation.type}`);
     } else if (trigger.operation.type === "polling") {
       const url = trigger.operation.operation.url;
@@ -409,18 +583,17 @@ export class RuntimeWorkflow {
       this.triggerSocket = new JsonRpcWebSocket(url);
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
       await this.triggerSocket.request<ConnectorInput>("setupSignal", {
-        key: this.workflow.trigger.operation,
+        key: trigger.key,
         sessionId,
         credentials: this.workflow.trigger.credentials,
-        fields: sanitizeInput(this.workflow.trigger.input, trigger.operation.inputFields || []),
+        fields,
       });
       console.debug(
         `[${this.key}] Started trigger ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`
       );
       this.keepAlive();
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      throw new Error(`Invalid trigger type: ${(trigger.operation as any).type}`);
+      throw new Error(`Invalid trigger type: ${trigger.operation.type}`);
     }
   }
 }

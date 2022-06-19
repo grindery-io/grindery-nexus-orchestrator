@@ -95,17 +95,10 @@ export type FieldSchema = {
   updateFieldDefinition?: boolean; // Only has effect when `inputFieldProviderUrl` is present. If not set or set to `true`, `inputFieldProviderUrl` is called to update field definition after this field is changed. If set to `false`, this field won't trigger field definition update.
   inputFormat?: string; // Useful when you expect the input to be part of a longer string. Put "{{input}}" in place of the user's input (e.g "https://{{input}}.yourdomain.com").
 };
-export type ChainEventOperationFilterSchema = {
-  fromBlock?: number | string; // The number of the earliest block ("latest" may be given to mean the most recent and "pending" currently mining, block). By default "latest".
-  toBlock?: number | string; // The number of the latest block ("latest" may be given to mean the most recent and "pending" currently mining, block). By default "latest".
-  address?: string | string[]; // An address or a list of addresses to only get logs from particular account(s).
-  topics?: string[]; // An array of values which must each appear in the log entries. The order is important, if you want to leave topics out use null, e.g. [null, '0x12...']. You can also pass an array for each topic with options for that topic e.g. [null, ['option1', 'option2']]
-};
 export type ChainEventOperationSchema = {
   type: "blockchain:event";
   chains: string[]; // All the chains for which this event is supported.
-  signature: string; // Signature of the event e.g `Transfer(address,uint256)` for ERC20 Transfer event.
-  filters: ChainEventOperationFilterSchema; // Defines the blockchain event filter parameters for this trigger.
+  signature: string; // Signature of the event including parameter names (which are mapped to input fields by key) e.g `Transfer(address indexed from, address indexed to, uint256 value)` for ERC20 Transfer event.
   inputFields?: FieldSchema[]; // The data fields the user needs to configure for this trigger.
   inputFieldProviderUrl?: string; // A [JSON-RPC 2.0](https://www.jsonrpc.org/specification) endpoint for updating available input fields based on user input. If present, it is called after user changes a field (see `updateFieldDefinition` in [FieldSchema](#fieldschema) for details) to update available fields or choices. See also [FieldProviderRequestSchema](#fieldproviderrequestschema) and [FieldProviderResponseSchema](#fieldproviderresponseschema) for definition of the endpoint.
   outputFields?: FieldSchema[]; // The data fields returned by this trigger.
@@ -140,15 +133,10 @@ export type APICallOperationSchema = {
   outputFields?: FieldSchema[]; // The data fields returned by this trigger.
   sample: object; // Sample output data.
 };
-export type ChainCallOperationArgsSchema = {
-  type: string; // The value type for this argument e.g `bool`, `int`, `uint`, `address` etc.
-  value: number | string; // The value of the argument to be passed to the function.
-};
 export type ChainCallOperationSchema = {
   type: "blockchain:call"; // Must be set to `blockchain:call`.
   accounts: string[]; // The blockchain accounts for which this function can be called.
-  signature: string; // Signature of the function e.g `transfer(address,uint256)` for ERC20 transfer call.
-  arguments: ChainCallOperationArgsSchema[]; // Defines the blockchain function call arguments for this action.
+  signature: string; // Signature of the function including parameter names (which are mapped to input fields by key) e.g `function transfer(address to, uint256 value)` for ERC20 transfer call.
   inputFields?: FieldSchema[]; // The data fields the user needs to configure for this trigger.
   inputFieldProviderUrl?: string; // A [JSON-RPC 2.0](https://www.jsonrpc.org/specification) endpoint for updating available input fields based on user input. If present, it is called after user changes a field (see `updateFieldDefinition` in [FieldSchema](#fieldschema) for details) to update available fields or choices. See also [FieldProviderRequestSchema](#fieldproviderrequestschema) and [FieldProviderResponseSchema](#fieldproviderresponseschema) for definition of the endpoint.
   outputFields?: FieldSchema[]; // The data fields returned by this trigger.
