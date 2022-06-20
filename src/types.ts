@@ -97,7 +97,7 @@ export type FieldSchema = {
 };
 export type ChainEventOperationSchema = {
   type: "blockchain:event";
-  chains: string[]; // All the chains for which this event is supported.
+  chains?: string[]; // All the chains for which this event is supported.
   signature: string; // Signature of the event including parameter names (which are mapped to input fields by key) e.g `Transfer(address indexed from, address indexed to, uint256 value)` for ERC20 Transfer event.
   inputFields?: FieldSchema[]; // The data fields the user needs to configure for this trigger.
   inputFieldProviderUrl?: string; // A [JSON-RPC 2.0](https://www.jsonrpc.org/specification) endpoint for updating available input fields based on user input. If present, it is called after user changes a field (see `updateFieldDefinition` in [FieldSchema](#fieldschema) for details) to update available fields or choices. See also [FieldProviderRequestSchema](#fieldproviderrequestschema) and [FieldProviderResponseSchema](#fieldproviderresponseschema) for definition of the endpoint.
@@ -135,7 +135,7 @@ export type APICallOperationSchema = {
 };
 export type ChainCallOperationSchema = {
   type: "blockchain:call"; // Must be set to `blockchain:call`.
-  accounts: string[]; // The blockchain accounts for which this function can be called.
+  accounts?: string[]; // The blockchain accounts for which this function can be called.
   signature: string; // Signature of the function including parameter names (which are mapped to input fields by key) e.g `function transfer(address to, uint256 value)` for ERC20 transfer call.
   inputFields?: FieldSchema[]; // The data fields the user needs to configure for this trigger.
   inputFieldProviderUrl?: string; // A [JSON-RPC 2.0](https://www.jsonrpc.org/specification) endpoint for updating available input fields based on user input. If present, it is called after user changes a field (see `updateFieldDefinition` in [FieldSchema](#fieldschema) for details) to update available fields or choices. See also [FieldProviderRequestSchema](#fieldproviderrequestschema) and [FieldProviderResponseSchema](#fieldproviderresponseschema) for definition of the endpoint.

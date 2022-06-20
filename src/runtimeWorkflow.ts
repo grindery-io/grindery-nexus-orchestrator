@@ -333,6 +333,2357 @@ const schemas: { [key: string]: ConnectorSchema } = {
       },
     ],
   },
+  molochOnXDai: {
+    key: "molochOnXDai",
+    name: "MolochDAO",
+    version: "1.0.0",
+    platformVersion: "1.0.0",
+    triggers: [
+      {
+        key: "SummonCompleteTrigger",
+        name: "Summon Complete",
+        display: {
+          label: "Summon Complete",
+          description: "Summon Complete",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature:
+            "event SummonComplete(address indexed summoner, address[] tokens, uint256 summoningTime, uint256 periodDuration, uint256 votingPeriodLength, uint256 gracePeriodLength, uint256 proposalDeposit, uint256 dilutionBound, uint256 processingReward)",
+          inputFields: [
+            {
+              key: "summoner",
+              label: "Summoner",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "tokens",
+              label: "Tokens",
+              type: "string",
+              placeholder: "",
+              list: true,
+            },
+            {
+              key: "summoningTime",
+              label: "Summoning Time",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "periodDuration",
+              label: "Period Duration",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "votingPeriodLength",
+              label: "Voting Period Length",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "gracePeriodLength",
+              label: "Grace Period Length",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalDeposit",
+              label: "Proposal Deposit",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "dilutionBound",
+              label: "Dilution Bound",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "processingReward",
+              label: "Processing Reward",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "summoner",
+              label: "Summoner",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "tokens",
+              label: "Tokens",
+              type: "string",
+              placeholder: "",
+              list: true,
+            },
+            {
+              key: "summoningTime",
+              label: "Summoning Time",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "periodDuration",
+              label: "Period Duration",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "votingPeriodLength",
+              label: "Voting Period Length",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "gracePeriodLength",
+              label: "Grace Period Length",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalDeposit",
+              label: "Proposal Deposit",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "dilutionBound",
+              label: "Dilution Bound",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "processingReward",
+              label: "Processing Reward",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "SubmitProposalTrigger",
+        name: "Submit Proposal",
+        display: {
+          label: "Submit Proposal",
+          description: "Submit Proposal",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature:
+            "event SubmitProposal(address indexed applicant, uint256 sharesRequested, uint256 lootRequested, uint256 tributeOffered, address tributeToken, uint256 paymentRequested, address paymentToken, string details, bool[6] flags, uint256 proposalId, address indexed delegateKey, address indexed memberAddress)",
+          inputFields: [
+            {
+              key: "applicant",
+              label: "Applicant",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "sharesRequested",
+              label: "Shares Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "lootRequested",
+              label: "Loot Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "tributeOffered",
+              label: "Tribute Offered",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "tributeToken",
+              label: "Tribute Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "paymentRequested",
+              label: "Payment Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "paymentToken",
+              label: "Payment Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "details",
+              label: "Details",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "flags",
+              label: "Flags",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "delegateKey",
+              label: "Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "applicant",
+              label: "Applicant",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "sharesRequested",
+              label: "Shares Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "lootRequested",
+              label: "Loot Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "tributeOffered",
+              label: "Tribute Offered",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "tributeToken",
+              label: "Tribute Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "paymentRequested",
+              label: "Payment Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "paymentToken",
+              label: "Payment Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "details",
+              label: "Details",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "flags",
+              label: "Flags",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "delegateKey",
+              label: "Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "SponsorProposalTrigger",
+        name: "Sponsor Proposal",
+        display: {
+          label: "Sponsor Proposal",
+          description: "Sponsor Proposal",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature:
+            "event SponsorProposal(address indexed delegateKey, address indexed memberAddress, uint256 proposalId, uint256 proposalIndex, uint256 startingPeriod)",
+          inputFields: [
+            {
+              key: "delegateKey",
+              label: "Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "startingPeriod",
+              label: "Starting Period",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "delegateKey",
+              label: "Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "startingPeriod",
+              label: "Starting Period",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "SubmitVoteTrigger",
+        name: "Submit Vote",
+        display: {
+          label: "Submit Vote",
+          description: "Submit Vote",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature:
+            "event SubmitVote(uint256 proposalId, uint256 indexed proposalIndex, address indexed delegateKey, address indexed memberAddress, uint8 uintVote)",
+          inputFields: [
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "delegateKey",
+              label: "Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "uintVote",
+              label: "Uint Vote",
+              type: "number",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "delegateKey",
+              label: "Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "uintVote",
+              label: "Uint Vote",
+              type: "number",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "ProcessProposalTrigger",
+        name: "Process Proposal",
+        display: {
+          label: "Process Proposal",
+          description: "Process Proposal",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature: "event ProcessProposal(uint256 indexed proposalIndex, uint256 indexed proposalId, bool didPass)",
+          inputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "didPass",
+              label: "Did Pass",
+              type: "boolean",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "didPass",
+              label: "Did Pass",
+              type: "boolean",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "ProcessWhitelistProposalTrigger",
+        name: "Process Whitelist Proposal",
+        display: {
+          label: "Process Whitelist Proposal",
+          description: "Process Whitelist Proposal",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature:
+            "event ProcessWhitelistProposal(uint256 indexed proposalIndex, uint256 indexed proposalId, bool didPass)",
+          inputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "didPass",
+              label: "Did Pass",
+              type: "boolean",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "didPass",
+              label: "Did Pass",
+              type: "boolean",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "ProcessGuildKickProposalTrigger",
+        name: "Process Guild Kick Proposal",
+        display: {
+          label: "Process Guild Kick Proposal",
+          description: "Process Guild Kick Proposal",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature:
+            "event ProcessGuildKickProposal(uint256 indexed proposalIndex, uint256 indexed proposalId, bool didPass)",
+          inputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "didPass",
+              label: "Did Pass",
+              type: "boolean",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "didPass",
+              label: "Did Pass",
+              type: "boolean",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "RagequitTrigger",
+        name: "Ragequit",
+        display: {
+          label: "Ragequit",
+          description: "Ragequit",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature: "event Ragequit(address indexed memberAddress, uint256 sharesToBurn, uint256 lootToBurn)",
+          inputFields: [
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "sharesToBurn",
+              label: "Shares To Burn",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "lootToBurn",
+              label: "Loot To Burn",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "sharesToBurn",
+              label: "Shares To Burn",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "lootToBurn",
+              label: "Loot To Burn",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "TokensCollectedTrigger",
+        name: "Tokens Collected",
+        display: {
+          label: "Tokens Collected",
+          description: "Tokens Collected",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature: "event TokensCollected(address indexed token, uint256 amountToCollect)",
+          inputFields: [
+            {
+              key: "token",
+              label: "Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "amountToCollect",
+              label: "Amount To Collect",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "token",
+              label: "Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "amountToCollect",
+              label: "Amount To Collect",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "CancelProposalTrigger",
+        name: "Cancel Proposal",
+        display: {
+          label: "Cancel Proposal",
+          description: "Cancel Proposal",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature: "event CancelProposal(uint256 indexed proposalId, address applicantAddress)",
+          inputFields: [
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "applicantAddress",
+              label: "Applicant Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+            {
+              key: "applicantAddress",
+              label: "Applicant Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "UpdateDelegateKeyTrigger",
+        name: "Update Delegate Key",
+        display: {
+          label: "Update Delegate Key",
+          description: "Update Delegate Key",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature: "event UpdateDelegateKey(address indexed memberAddress, address newDelegateKey)",
+          inputFields: [
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "newDelegateKey",
+              label: "New Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "newDelegateKey",
+              label: "New Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "WithdrawTrigger",
+        name: "Withdraw",
+        display: {
+          label: "Withdraw",
+          description: "Withdraw",
+        },
+        operation: {
+          type: "blockchain:event",
+          signature: "event Withdraw(address indexed memberAddress, address token, uint256 amount)",
+          inputFields: [
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "token",
+              label: "Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "amount",
+              label: "Amount",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          outputFields: [
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "token",
+              label: "Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+            },
+            {
+              key: "amount",
+              label: "Amount",
+              type: "string",
+              placeholder: "",
+              list: false,
+            },
+          ],
+          sample: {},
+        },
+      },
+    ],
+    actions: [
+      {
+        key: "proposalsAction",
+        name: "Proposals (View function)",
+        display: {
+          label: "Proposals (View function)",
+          description: "Proposals (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature:
+            "function proposals(uint256 param0) view returns address, address, address, uint256, uint256, uint256, address, uint256, address, uint256, uint256, uint256, string, uint256",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "processingRewardAction",
+        name: "Processing Reward (View function)",
+        display: {
+          label: "Processing Reward (View function)",
+          description: "Processing Reward (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function processingReward() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Processing Reward",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "getMemberProposalVoteAction",
+        name: "Get Member Proposal Vote (View function)",
+        display: {
+          label: "Get Member Proposal Vote (View function)",
+          description: "Get Member Proposal Vote (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function getMemberProposalVote(address memberAddress, uint256 proposalIndex) view returns uint8",
+          inputFields: [
+            {
+              key: "memberAddress",
+              label: "Member Address",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Get Member Proposal Vote",
+              type: "number",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "getCurrentPeriodAction",
+        name: "Get Current Period (View function)",
+        display: {
+          label: "Get Current Period (View function)",
+          description: "Get Current Period (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function getCurrentPeriod() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Get Current Period",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "membersAction",
+        name: "Members (View function)",
+        display: {
+          label: "Members (View function)",
+          description: "Members (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function members(address param0) view returns address, uint256, uint256, bool, uint256, uint256",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "withdrawBalanceAction",
+        name: "Withdraw Balance",
+        display: {
+          label: "Withdraw Balance",
+          description: "Withdraw Balance",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function withdrawBalance(address token, uint256 amount)",
+          inputFields: [
+            {
+              key: "token",
+              label: "Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "amount",
+              label: "Amount",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "submitGuildKickProposalAction",
+        name: "Submit Guild Kick Proposal",
+        display: {
+          label: "Submit Guild Kick Proposal",
+          description: "Submit Guild Kick Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function submitGuildKickProposal(address memberToKick, string details) returns uint256",
+          inputFields: [
+            {
+              key: "memberToKick",
+              label: "Member To Kick",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "details",
+              label: "Details",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "ragequitAction",
+        name: "Ragequit",
+        display: {
+          label: "Ragequit",
+          description: "Ragequit",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function ragequit(uint256 sharesToBurn, uint256 lootToBurn)",
+          inputFields: [
+            {
+              key: "sharesToBurn",
+              label: "Shares To Burn",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "lootToBurn",
+              label: "Loot To Burn",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "approvedTokensAction",
+        name: "Approved Tokens (View function)",
+        display: {
+          label: "Approved Tokens (View function)",
+          description: "Approved Tokens (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function approvedTokens(uint256 param0) view returns address",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Approved Tokens",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "updateDelegateKeyAction",
+        name: "Update Delegate Key",
+        display: {
+          label: "Update Delegate Key",
+          description: "Update Delegate Key",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function updateDelegateKey(address newDelegateKey)",
+          inputFields: [
+            {
+              key: "newDelegateKey",
+              label: "New Delegate Key",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "TOTALAction",
+        name: "TOTAL (View function)",
+        display: {
+          label: "TOTAL (View function)",
+          description: "TOTAL (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function TOTAL() view returns address",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of TOTAL",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "processWhitelistProposalAction",
+        name: "Process Whitelist Proposal",
+        display: {
+          label: "Process Whitelist Proposal",
+          description: "Process Whitelist Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function processWhitelistProposal(uint256 proposalIndex)",
+          inputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "totalSharesAction",
+        name: "Total Shares (View function)",
+        display: {
+          label: "Total Shares (View function)",
+          description: "Total Shares (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function totalShares() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Total Shares",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "proposalQueueAction",
+        name: "Proposal Queue (View function)",
+        display: {
+          label: "Proposal Queue (View function)",
+          description: "Proposal Queue (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function proposalQueue(uint256 param0) view returns uint256",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Proposal Queue",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "proposedToKickAction",
+        name: "Proposed To Kick (View function)",
+        display: {
+          label: "Proposed To Kick (View function)",
+          description: "Proposed To Kick (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function proposedToKick(address param0) view returns bool",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Proposed To Kick",
+              type: "boolean",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "memberAddressByDelegateKeyAction",
+        name: "Member Address By Delegate Key (View function)",
+        display: {
+          label: "Member Address By Delegate Key (View function)",
+          description: "Member Address By Delegate Key (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function memberAddressByDelegateKey(address param0) view returns address",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Member Address By Delegate Key",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "withdrawBalancesAction",
+        name: "Withdraw Balances",
+        display: {
+          label: "Withdraw Balances",
+          description: "Withdraw Balances",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function withdrawBalances(address[] tokens, uint256[] amounts, bool max)",
+          inputFields: [
+            {
+              key: "tokens",
+              label: "Tokens",
+              type: "string",
+              placeholder: "",
+              list: true,
+              required: true,
+            },
+            {
+              key: "amounts",
+              label: "Amounts",
+              type: "string",
+              placeholder: "",
+              list: true,
+              required: true,
+            },
+            {
+              key: "max",
+              label: "Max",
+              type: "boolean",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "userTokenBalancesAction",
+        name: "User Token Balances (View function)",
+        display: {
+          label: "User Token Balances (View function)",
+          description: "User Token Balances (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function userTokenBalances(address param0, address param1) view returns uint256",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "param1",
+              label: "Param 1",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of User Token Balances",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "submitProposalAction",
+        name: "Submit Proposal",
+        display: {
+          label: "Submit Proposal",
+          description: "Submit Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature:
+            "function submitProposal(address applicant, uint256 sharesRequested, uint256 lootRequested, uint256 tributeOffered, address tributeToken, uint256 paymentRequested, address paymentToken, string details) returns uint256",
+          inputFields: [
+            {
+              key: "applicant",
+              label: "Applicant",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "sharesRequested",
+              label: "Shares Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "lootRequested",
+              label: "Loot Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "tributeOffered",
+              label: "Tribute Offered",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "tributeToken",
+              label: "Tribute Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "paymentRequested",
+              label: "Payment Requested",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "paymentToken",
+              label: "Payment Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "details",
+              label: "Details",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "collectTokensAction",
+        name: "Collect Tokens",
+        display: {
+          label: "Collect Tokens",
+          description: "Collect Tokens",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function collectTokens(address token)",
+          inputFields: [
+            {
+              key: "token",
+              label: "Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "totalLootAction",
+        name: "Total Loot (View function)",
+        display: {
+          label: "Total Loot (View function)",
+          description: "Total Loot (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function totalLoot() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Total Loot",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "gracePeriodLengthAction",
+        name: "Grace Period Length (View function)",
+        display: {
+          label: "Grace Period Length (View function)",
+          description: "Grace Period Length (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function gracePeriodLength() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Grace Period Length",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "getUserTokenBalanceAction",
+        name: "Get User Token Balance (View function)",
+        display: {
+          label: "Get User Token Balance (View function)",
+          description: "Get User Token Balance (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function getUserTokenBalance(address user, address token) view returns uint256",
+          inputFields: [
+            {
+              key: "user",
+              label: "User",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "token",
+              label: "Token",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Get User Token Balance",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "tokenWhitelistAction",
+        name: "Token Whitelist (View function)",
+        display: {
+          label: "Token Whitelist (View function)",
+          description: "Token Whitelist (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function tokenWhitelist(address param0) view returns bool",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Token Whitelist",
+              type: "boolean",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "getTokenCountAction",
+        name: "Get Token Count (View function)",
+        display: {
+          label: "Get Token Count (View function)",
+          description: "Get Token Count (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function getTokenCount() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Get Token Count",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "getProposalQueueLengthAction",
+        name: "Get Proposal Queue Length (View function)",
+        display: {
+          label: "Get Proposal Queue Length (View function)",
+          description: "Get Proposal Queue Length (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function getProposalQueueLength() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Get Proposal Queue Length",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "summoningTimeAction",
+        name: "Summoning Time (View function)",
+        display: {
+          label: "Summoning Time (View function)",
+          description: "Summoning Time (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function summoningTime() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Summoning Time",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "votingPeriodLengthAction",
+        name: "Voting Period Length (View function)",
+        display: {
+          label: "Voting Period Length (View function)",
+          description: "Voting Period Length (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function votingPeriodLength() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Voting Period Length",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "proposalDepositAction",
+        name: "Proposal Deposit (View function)",
+        display: {
+          label: "Proposal Deposit (View function)",
+          description: "Proposal Deposit (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function proposalDeposit() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Proposal Deposit",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "hasVotingPeriodExpiredAction",
+        name: "Has Voting Period Expired (View function)",
+        display: {
+          label: "Has Voting Period Expired (View function)",
+          description: "Has Voting Period Expired (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function hasVotingPeriodExpired(uint256 startingPeriod) view returns bool",
+          inputFields: [
+            {
+              key: "startingPeriod",
+              label: "Starting Period",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Has Voting Period Expired",
+              type: "boolean",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "sponsorProposalAction",
+        name: "Sponsor Proposal",
+        display: {
+          label: "Sponsor Proposal",
+          description: "Sponsor Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function sponsorProposal(uint256 proposalId)",
+          inputFields: [
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "submitVoteAction",
+        name: "Submit Vote",
+        display: {
+          label: "Submit Vote",
+          description: "Submit Vote",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function submitVote(uint256 proposalIndex, uint8 uintVote)",
+          inputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "uintVote",
+              label: "Uint Vote",
+              type: "number",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "totalGuildBankTokensAction",
+        name: "Total Guild Bank Tokens (View function)",
+        display: {
+          label: "Total Guild Bank Tokens (View function)",
+          description: "Total Guild Bank Tokens (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function totalGuildBankTokens() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Total Guild Bank Tokens",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "canRagequitAction",
+        name: "Can Ragequit (View function)",
+        display: {
+          label: "Can Ragequit (View function)",
+          description: "Can Ragequit (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function canRagequit(uint256 highestIndexYesVote) view returns bool",
+          inputFields: [
+            {
+              key: "highestIndexYesVote",
+              label: "Highest Index Yes Vote",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Can Ragequit",
+              type: "boolean",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "initAction",
+        name: "Init",
+        display: {
+          label: "Init",
+          description: "Init",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature:
+            "function init(address[] _summoner, address[] _approvedTokens, uint256 _periodDuration, uint256 _votingPeriodLength, uint256 _gracePeriodLength, uint256 _proposalDeposit, uint256 _dilutionBound, uint256 _processingReward, uint256[] _summonerShares)",
+          inputFields: [
+            {
+              key: "_summoner",
+              label: "Summoner",
+              type: "string",
+              placeholder: "",
+              list: true,
+              required: true,
+            },
+            {
+              key: "_approvedTokens",
+              label: "Approved Tokens",
+              type: "string",
+              placeholder: "",
+              list: true,
+              required: true,
+            },
+            {
+              key: "_periodDuration",
+              label: "Period Duration",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "_votingPeriodLength",
+              label: "Voting Period Length",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "_gracePeriodLength",
+              label: "Grace Period Length",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "_proposalDeposit",
+              label: "Proposal Deposit",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "_dilutionBound",
+              label: "Dilution Bound",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "_processingReward",
+              label: "Processing Reward",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+            {
+              key: "_summonerShares",
+              label: "Summoner Shares",
+              type: "string",
+              placeholder: "",
+              list: true,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "dilutionBoundAction",
+        name: "Dilution Bound (View function)",
+        display: {
+          label: "Dilution Bound (View function)",
+          description: "Dilution Bound (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function dilutionBound() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Dilution Bound",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "getProposalFlagsAction",
+        name: "Get Proposal Flags (View function)",
+        display: {
+          label: "Get Proposal Flags (View function)",
+          description: "Get Proposal Flags (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function getProposalFlags(uint256 proposalId) view returns bool[6]",
+          inputFields: [
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Get Proposal Flags",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "memberListAction",
+        name: "Member List (View function)",
+        display: {
+          label: "Member List (View function)",
+          description: "Member List (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function memberList(uint256 param0) view returns address",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Member List",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "periodDurationAction",
+        name: "Period Duration (View function)",
+        display: {
+          label: "Period Duration (View function)",
+          description: "Period Duration (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function periodDuration() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Period Duration",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "depositTokenAction",
+        name: "Deposit Token (View function)",
+        display: {
+          label: "Deposit Token (View function)",
+          description: "Deposit Token (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function depositToken() view returns address",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Deposit Token",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "proposalCountAction",
+        name: "Proposal Count (View function)",
+        display: {
+          label: "Proposal Count (View function)",
+          description: "Proposal Count (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function proposalCount() view returns uint256",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Proposal Count",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "ragekickAction",
+        name: "Ragekick",
+        display: {
+          label: "Ragekick",
+          description: "Ragekick",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function ragekick(address memberToKick)",
+          inputFields: [
+            {
+              key: "memberToKick",
+              label: "Member To Kick",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "cancelProposalAction",
+        name: "Cancel Proposal",
+        display: {
+          label: "Cancel Proposal",
+          description: "Cancel Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function cancelProposal(uint256 proposalId)",
+          inputFields: [
+            {
+              key: "proposalId",
+              label: "Proposal Id",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "proposedToWhitelistAction",
+        name: "Proposed To Whitelist (View function)",
+        display: {
+          label: "Proposed To Whitelist (View function)",
+          description: "Proposed To Whitelist (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function proposedToWhitelist(address param0) view returns bool",
+          inputFields: [
+            {
+              key: "param0",
+              label: "Param 0",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of Proposed To Whitelist",
+              type: "boolean",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "processGuildKickProposalAction",
+        name: "Process Guild Kick Proposal",
+        display: {
+          label: "Process Guild Kick Proposal",
+          description: "Process Guild Kick Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function processGuildKickProposal(uint256 proposalIndex)",
+          inputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "processProposalAction",
+        name: "Process Proposal",
+        display: {
+          label: "Process Proposal",
+          description: "Process Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function processProposal(uint256 proposalIndex)",
+          inputFields: [
+            {
+              key: "proposalIndex",
+              label: "Proposal Index",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+      {
+        key: "ESCROWAction",
+        name: "ESCROW (View function)",
+        display: {
+          label: "ESCROW (View function)",
+          description: "ESCROW (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function ESCROW() view returns address",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of ESCROW",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "GUILDAction",
+        name: "GUILD (View function)",
+        display: {
+          label: "GUILD (View function)",
+          description: "GUILD (View function)",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function GUILD() view returns address",
+          inputFields: [],
+          outputFields: [
+            {
+              key: "returnValue",
+              label: "Return value of GUILD",
+              type: "string",
+            },
+          ],
+          sample: {},
+        },
+      },
+      {
+        key: "submitWhitelistProposalAction",
+        name: "Submit Whitelist Proposal",
+        display: {
+          label: "Submit Whitelist Proposal",
+          description: "Submit Whitelist Proposal",
+        },
+        operation: {
+          type: "blockchain:call",
+          signature: "function submitWhitelistProposal(address tokenToWhitelist, string details) returns uint256",
+          inputFields: [
+            {
+              key: "tokenToWhitelist",
+              label: "Token To Whitelist",
+              type: "string",
+              placeholder: "Enter a blockchain address",
+              list: false,
+              required: true,
+            },
+            {
+              key: "details",
+              label: "Details",
+              type: "string",
+              placeholder: "",
+              list: false,
+              required: true,
+            },
+          ],
+          outputFields: [],
+          sample: {},
+        },
+      },
+    ],
+  },
 };
 
 async function getConnectorSchema(connectorId: string): Promise<ConnectorSchema> {
