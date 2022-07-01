@@ -1,5 +1,12 @@
 import { createJSONRPCErrorResponse, JSONRPCErrorCode, JSONRPCParams, JSONRPCServer } from "json-rpc-2.0";
-import { createWorkflow, deleteWorkflow, getWorkflowExecutions, getWorkflowExecutionLog, listWorkflows, testAction } from "./orchestrator";
+import {
+  createWorkflow,
+  deleteWorkflow,
+  getWorkflowExecutions,
+  getWorkflowExecutionLog,
+  listWorkflows,
+  testAction,
+} from "./orchestrator";
 import * as Sentry from "@sentry/node";
 
 export class InvalidParamsError extends Error {
@@ -36,11 +43,16 @@ function byObject(func) {
 export function createJsonRpcServer() {
   const server = new JSONRPCServer();
   server.applyMiddleware(exceptionMiddleware);
-  server.addMethod("or_createWorkflow", byObject(createWorkflow));
-  server.addMethod("or_deleteWorkflow", byObject(deleteWorkflow));
-  server.addMethod("or_listWorkflows", byObject(listWorkflows));
-  server.addMethod("or_testAction", byObject(testAction));
-  server.addMethod("or_getWorkflowExecutions", byObject(getWorkflowExecutions));
-  server.addMethod("or_getWorkflowExecutionLog", byObject(getWorkflowExecutionLog));
+  const methods = {
+    createWorkflow,
+    deleteWorkflow,
+    getWorkflowExecutions,
+    getWorkflowExecutionLog,
+    listWorkflows,
+    testAction,
+  };
+  for (const [name, func] of Object.entries(methods)) {
+    server.addMethod(name, byObject(func));
+  }
   return server;
 }
