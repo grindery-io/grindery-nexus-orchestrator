@@ -1,5 +1,5 @@
 import { createJSONRPCErrorResponse, JSONRPCErrorCode, JSONRPCParams, JSONRPCServer } from "json-rpc-2.0";
-import { createWorkflow, deleteWorkflow, listWorkflows, testAction } from "./orchestrator";
+import { createWorkflow, deleteWorkflow, getWorkflowExecutions, getWorkflowExecutionLog, listWorkflows, testAction } from "./orchestrator";
 import * as Sentry from "@sentry/node";
 
 export class InvalidParamsError extends Error {
@@ -40,5 +40,7 @@ export function createJsonRpcServer() {
   server.addMethod("or_deleteWorkflow", byObject(deleteWorkflow));
   server.addMethod("or_listWorkflows", byObject(listWorkflows));
   server.addMethod("or_testAction", byObject(testAction));
+  server.addMethod("or_getWorkflowExecutions", byObject(getWorkflowExecutions));
+  server.addMethod("or_getWorkflowExecutionLog", byObject(getWorkflowExecutionLog));
   return server;
 }

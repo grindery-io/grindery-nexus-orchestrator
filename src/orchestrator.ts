@@ -60,6 +60,49 @@ export async function listWorkflows({ userAccountId }: { userAccountId: string }
   return (await result.toArray()).map((x) => ({ ...x, workflow: JSON.parse(x.workflow) }));
 }
 
+export async function getWorkflowExecutions({
+  workflowKey,
+  since,
+  until,
+  limit,
+}: {
+  workflowKey: string;
+  since?: number;
+  until?: number;
+  limit?: number;
+}) {
+  if (!workflowKey) {
+    throw new InvalidParamsError("Missing workflowKey");
+  }
+  const collection = await getCollection("workflowExecutions");
+  const result = await collection.aggregate([
+    { $match: { workflowKey, startedAt: { $gte: since || 0, $lte: until || Infinity } } },
+    {
+      $group: {
+        _id: "$executionId",
+        startedAt: { $min: "$startedAt" },
+      },
+    },
+    { $sort: { startedAt: -1 } },
+    { $limit: limit || 100 },
+  ]);
+  return (await result.toArray()).map((x) => ({ executionId: x._id, startedAt: x.startedAt }));
+}
+export async function getWorkflowExecutionLog({ executionId }: { executionId: string }) {
+  if (!executionId) {
+    throw new InvalidParamsError("Missing executionId");
+  }
+  const collection = await getCollection("workflowExecutions");
+  const result = await collection.find({
+    executionId,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (await result.toArray()).map((x: any) => {
+    delete x._id;
+    return x;
+  });
+}
+
 export async function deleteWorkflow({ userAccountId, key }: { userAccountId: string; key: string }) {
   verifyAccountId(userAccountId);
   const collection = await getCollection("workflows");
