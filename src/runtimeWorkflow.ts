@@ -2727,13 +2727,15 @@ async function runAction({
   sessionId: string;
   executionId: string;
 }) {
+  let operationKey = step.operation;
   let actionOp = action.operation;
   if (actionOp.type === "blockchain:call") {
     const web3Connector = await getConnectorSchema("web3");
     if (!web3Connector) {
       throw new Error("Web3 connector not found");
     }
-    const web3Action = web3Connector.actions?.find((a) => a.key === "callSmartContract");
+    operationKey = "callSmartContract";
+    const web3Action = web3Connector.actions?.find((a) => a.key === operationKey);
     if (!web3Action) {
       throw new Error("Web3 call action not found");
     }
@@ -2756,7 +2758,7 @@ async function runAction({
     const socket = new JsonRpcWebSocket(url);
     try {
       const result = (await socket.request<ConnectorInput>("runAction", {
-        key: step.operation,
+        key: operationKey,
         sessionId,
         executionId,
         credentials: step.credentials,
