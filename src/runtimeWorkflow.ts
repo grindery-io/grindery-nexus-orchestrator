@@ -2720,12 +2720,14 @@ async function runAction({
   step,
   sessionId,
   executionId,
+  dryRun,
 }: {
   action: ActionSchema;
-  input: unknown;
+  input: { [key: string]: unknown };
   step: OperationSchema;
   sessionId: string;
   executionId: string;
+  dryRun?: boolean;
 }) {
   let operationKey = step.operation;
   let actionOp = action.operation;
@@ -2762,7 +2764,7 @@ async function runAction({
         sessionId,
         executionId,
         credentials: step.credentials,
-        fields: input,
+        fields: { ...input, dryRun },
       })) as ConnectorOutput;
       return result.payload;
     } finally {
@@ -2773,7 +2775,7 @@ async function runAction({
     throw new Error(`Invalid action type: ${actionOp.type}`);
   }
 }
-export async function runSingleAction({ step, input }: { step: OperationSchema; input: unknown }) {
+export async function runSingleAction({ step, input, dryRun }: { step: OperationSchema; input: unknown, dryRun?: boolean }) {
   const connector = await getConnectorSchema(step.connector);
   const action = connector.actions?.find((action) => action.key === step.operation);
   if (!action) {
@@ -2781,10 +2783,11 @@ export async function runSingleAction({ step, input }: { step: OperationSchema; 
   }
   return await runAction({
     action,
-    input,
+    input: input as { [key: string]: unknown },
     step,
     sessionId: uuidv4(),
     executionId: uuidv4(),
+    dryRun,
   });
 }
 export class RuntimeWorkflow {

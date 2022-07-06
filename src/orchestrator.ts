@@ -127,5 +127,5 @@ export async function testAction({
   input: unknown;
 }) {
   verifyAccountId(userAccountId);
-  return await runSingleAction({ step, input });
+  return await runSingleAction({ step, input, dryRun: true });
 }
