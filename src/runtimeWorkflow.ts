@@ -418,6 +418,7 @@ export class RuntimeWorkflow {
         throw new Error(`Unsupported polling URL: ${url}`);
       }
       const sessionId = uuidv4();
+      console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
       this.triggerSocket = new JsonRpcWebSocket(url);
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
       await this.triggerSocket.request<ConnectorInput>("setupSignal", {
