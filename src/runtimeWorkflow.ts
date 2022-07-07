@@ -276,24 +276,33 @@ export class RuntimeWorkflow {
   private running = false;
   private triggerSocket: JsonRpcWebSocket | null = null;
   private startCount = 0;
+  private version = 0;
 
   constructor(private key: string, private workflow: WorkflowSchema) {}
   async start() {
     this.running = true;
+    this.version++;
+    this.startCount = 0;
     await this.setupTrigger();
   }
   stop() {
     this.running = false;
     this.triggerSocket?.close();
+    this.version++;
     console.debug(`[${this.key}] Stopped`);
   }
   async keepAlive() {
     if (!this.running) {
       return;
     }
+    const currentVersion = this.version;
     try {
       await this.triggerSocket?.request("ping");
-      setTimeout(this.keepAlive.bind(this), parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000);
+      setTimeout(() => {
+        if (this.version === currentVersion) {
+          this.keepAlive();
+        }
+      }, parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000);
     } catch (e) {
       console.warn(`[${this.key}] Failed to keep alive: ${e.toString()}`);
       this.triggerSocket?.close();
@@ -388,12 +397,16 @@ export class RuntimeWorkflow {
     console.debug(`[${this.key}] Completed`);
   }
   async setupTrigger() {
+    const currentVersion = this.version;
     if (this.startCount > 20) {
       console.error(`[${this.key}] Too many attempts to setup signal, the workflow is halted`);
       return;
     }
     this.startCount++;
     await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, this.startCount) + Math.random() * 1000));
+    if (!this.running || this.version !== currentVersion) {
+      return;
+    }
     const currentStartCount = this.startCount;
     const triggerConnector = await getConnectorSchema(this.workflow.trigger.connector);
     let trigger = triggerConnector.triggers?.find((trigger) => trigger.key === this.workflow.trigger.operation);
@@ -445,7 +458,7 @@ export class RuntimeWorkflow {
       );
       this.keepAlive();
       setTimeout(() => {
-        if (this.startCount === currentStartCount) {
+        if (this.startCount === currentStartCount && this.version === currentVersion) {
           this.startCount = 0;
         }
       }, 60000);
