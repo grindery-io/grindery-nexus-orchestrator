@@ -421,12 +421,17 @@ export class RuntimeWorkflow {
       console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
       this.triggerSocket = new JsonRpcWebSocket(url);
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
-      await this.triggerSocket.request<ConnectorInput>("setupSignal", {
-        key: trigger.key,
-        sessionId,
-        credentials: this.workflow.trigger.credentials,
-        fields,
-      });
+      try {
+        await this.triggerSocket.request<ConnectorInput>("setupSignal", {
+          key: trigger.key,
+          sessionId,
+          credentials: this.workflow.trigger.credentials,
+          fields,
+        });
+      } catch (e) {
+        console.error(`[${this.key}] Failed to setup signal, the workflow is halted`);
+        throw e;
+      }
       console.debug(
         `[${this.key}] Started trigger ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`
       );
