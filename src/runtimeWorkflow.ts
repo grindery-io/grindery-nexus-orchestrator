@@ -275,6 +275,7 @@ export async function runSingleAction({
 export class RuntimeWorkflow {
   private running = false;
   private triggerSocket: JsonRpcWebSocket | null = null;
+  private startCount = 0;
 
   constructor(private key: string, private workflow: WorkflowSchema) {}
   async start() {
@@ -387,6 +388,13 @@ export class RuntimeWorkflow {
     console.debug(`[${this.key}] Completed`);
   }
   async setupTrigger() {
+    if (this.startCount > 20) {
+      console.error(`[${this.key}] Too many attempts to setup signal, the workflow is halted`);
+      return;
+    }
+    this.startCount++;
+    await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, this.startCount) + Math.random() * 1000));
+    const currentStartCount = this.startCount;
     const triggerConnector = await getConnectorSchema(this.workflow.trigger.connector);
     let trigger = triggerConnector.triggers?.find((trigger) => trigger.key === this.workflow.trigger.operation);
     if (!trigger) {
@@ -436,6 +444,11 @@ export class RuntimeWorkflow {
         `[${this.key}] Started trigger ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`
       );
       this.keepAlive();
+      setTimeout(() => {
+        if (this.startCount === currentStartCount) {
+          this.startCount = 0;
+        }
+      }, 60000);
     } else {
       throw new Error(`Invalid trigger type: ${trigger.operation.type}`);
     }
