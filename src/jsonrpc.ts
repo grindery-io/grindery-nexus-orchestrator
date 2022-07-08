@@ -6,6 +6,7 @@ import {
   getWorkflowExecutionLog,
   listWorkflows,
   testAction,
+  updateWorkflow,
 } from "./orchestrator";
 import * as Sentry from "@sentry/node";
 
@@ -46,6 +47,7 @@ export function createJsonRpcServer() {
   const methods = {
     createWorkflow,
     deleteWorkflow,
+    updateWorkflow,
     getWorkflowExecutions,
     getWorkflowExecutionLog,
     listWorkflows,

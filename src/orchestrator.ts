@@ -30,24 +30,69 @@ async function loadAllWorkflows() {
   }
 }
 setTimeout(loadAllWorkflows, 1000);
-export async function createWorkflow({ userAccountId, workflow }: { userAccountId: string; workflow: WorkflowSchema }) {
-  verifyAccountId(userAccountId);
-  const collection = await getCollection("workflows");
-  const key = uuidv4();
-  await collection.insertOne({
-    key,
-    userAccountId,
-    workflow: JSON.stringify(workflow),
-    enabled: true,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
+function stopWorkflow(key: string) {
+  if (allWorkflows.has(key)) {
+    const existing = allWorkflows.get(key);
+    existing?.stop();
+    allWorkflows.delete(key);
+  }
+}
+function loadWorkflow(key: string, workflow: WorkflowSchema) {
+  stopWorkflow(key);
   const runtimeWorkflow = new RuntimeWorkflow(key, workflow);
   allWorkflows.set(key, runtimeWorkflow);
   runtimeWorkflow.start().catch((e) => {
     console.error(e);
     Sentry.captureException(e);
   });
+}
+
+export async function createWorkflow({ userAccountId, workflow }: { userAccountId: string; workflow: WorkflowSchema }) {
+  verifyAccountId(userAccountId);
+  const collection = await getCollection("workflows");
+  const key = uuidv4();
+  const enabled = workflow.state !== "off";
+  await collection.insertOne({
+    key,
+    userAccountId,
+    workflow: JSON.stringify(workflow),
+    enabled,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+  if (enabled) {
+    loadWorkflow(key, workflow);
+  }
+  return { key };
+}
+
+export async function updateWorkflow({
+  userAccountId,
+  key,
+  workflow,
+}: {
+  userAccountId: string;
+  key: string;
+  workflow: WorkflowSchema;
+}) {
+  verifyAccountId(userAccountId);
+  if (!key) {
+    throw new InvalidParamsError("Missing key");
+  }
+  const collection = await getCollection("workflows");
+  const enabled = workflow.state !== "off";
+  const result = await collection.updateOne(
+    { key, userAccountId },
+    { $set: { workflow: JSON.stringify(workflow), enabled, updatedAt: Date.now() } }
+  );
+  if (result.matchedCount === 0) {
+    throw new Error(`Workflow not found: ${key}`);
+  }
+  if (enabled) {
+    loadWorkflow(key, workflow);
+  } else {
+    stopWorkflow(key);
+  }
   return { key };
 }
 
@@ -57,7 +102,11 @@ export async function listWorkflows({ userAccountId }: { userAccountId: string }
   const result = await collection.find({
     userAccountId,
   });
-  return (await result.toArray()).map((x) => ({ ...x, workflow: JSON.parse(x.workflow) }));
+  return (await result.toArray()).map((x) => ({
+    ...x,
+    workflow: JSON.parse(x.workflow),
+    state: x.enabled ? "on" : "off",
+  }));
 }
 
 export async function getWorkflowExecutions({
@@ -110,10 +159,7 @@ export async function deleteWorkflow({ userAccountId, key }: { userAccountId: st
     userAccountId,
     key,
   });
-  if (allWorkflows.has(key)) {
-    allWorkflows.get(key)?.stop();
-    allWorkflows.delete(key);
-  }
+  stopWorkflow(key);
   return { deleted: result.deletedCount === 1 };
 }
 
