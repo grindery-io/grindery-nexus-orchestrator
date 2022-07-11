@@ -175,3 +175,14 @@ export async function testAction({
   verifyAccountId(userAccountId);
   return await runSingleAction({ step, input, dryRun: true });
 }
+
+export async function isAllowedUser({
+  userAccountId,
+}: {
+  userAccountId: string;
+  step: OperationSchema;
+  input: unknown;
+}) {
+  verifyAccountId(userAccountId);
+  return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
+}
