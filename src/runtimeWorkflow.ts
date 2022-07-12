@@ -380,6 +380,7 @@ export class RuntimeWorkflow {
         await logCollection.updateOne(
           {
             executionId,
+            stepIndex: index,
           },
           {
             $set: {
