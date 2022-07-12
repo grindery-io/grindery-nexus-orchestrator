@@ -8,6 +8,7 @@ import {
   testAction,
   updateWorkflow,
   isAllowedUser,
+  requestEarlyAccess,
 } from "./orchestrator";
 import * as Sentry from "@sentry/node";
 
@@ -54,6 +55,7 @@ export function createJsonRpcServer() {
     listWorkflows,
     testAction,
     isAllowedUser,
+    requestEarlyAccess,
   };
   for (const [name, func] of Object.entries(methods)) {
     server.addMethod("or_" + name, byObject(func));

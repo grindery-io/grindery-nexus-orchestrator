@@ -326,6 +326,16 @@ export class RuntimeWorkflow {
     const logCollection = await getCollection("workflowExecutions");
     const sessionId = initialPayload.sessionId;
     const executionId = uuidv4();
+    await logCollection.insertOne({
+      workflowKey: this.key,
+      sessionId,
+      executionId,
+      stepIndex: -1,
+      input: {},
+      output: initialPayload.payload,
+      startedAt: Date.now(),
+      endedAt: Date.now(),
+    });
     const context = {} as { [key: string]: unknown };
     context["trigger"] = initialPayload.payload;
     let index = 0;

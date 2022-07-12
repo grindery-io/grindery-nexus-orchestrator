@@ -1,10 +1,12 @@
 import { v4 as uuidv4 } from "uuid";
 import * as Sentry from "@sentry/node";
+import { Client as HubSpotClient } from "@hubspot/api-client";
 
 import { InvalidParamsError } from "./jsonrpc";
 import { getCollection } from "./db";
 import { OperationSchema, WorkflowSchema } from "./types";
 import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
+import axios from "axios";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -176,13 +178,48 @@ export async function testAction({
   return await runSingleAction({ step, input, dryRun: true });
 }
 
-export async function isAllowedUser({
-  userAccountId,
-}: {
-  userAccountId: string;
-  step: OperationSchema;
-  input: unknown;
-}) {
+export async function isAllowedUser({ userAccountId }: { userAccountId: string }) {
   verifyAccountId(userAccountId);
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          },
+        ],
+      },
+    ],
+    properties: ["email"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  if (resp.results.length) {
+    return true;
+  }
   return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
+}
+
+export async function requestEarlyAccess({ userAccountId, email }: { userAccountId: string; email: string }) {
+  verifyAccountId(userAccountId);
+  if (!email) {
+    throw new InvalidParamsError("Missing email");
+  }
+  if (!/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email)) {
+    throw new InvalidParamsError("Invalid email");
+  }
+  await axios.post(
+    `https://api.hsforms.com/submissions/v3/integration/submit/${process.env.HS_PORTAL_ID}/${process.env.HS_EARLY_ACCESS_FORM}`,
+    {
+      fields: [
+        { name: "email", value: email },
+        { name: "ceramic_did", value: userAccountId },
+      ],
+    }
+  );
+  return true;
 }

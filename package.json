@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hubspot/api-client": "^7.0.1",
     "@sentry/node": "^6.17.8",
     "axios": "^0.26.1",
     "body-parser": "^1.20.0",
