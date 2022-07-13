@@ -190,6 +190,12 @@ export async function isAllowedUser({ userAccountId }: { userAccountId: string }
             operator: "EQ",
             value: userAccountId,
           },
+          {
+            propertyName: "approved_for_early_access",
+            operator: "EQ",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            value: true as any,
+          },
         ],
       },
     ],
