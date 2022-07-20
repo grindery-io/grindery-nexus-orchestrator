@@ -409,8 +409,9 @@ export class RuntimeWorkflow {
     console.debug(`[${this.key}] Completed`);
   }
   async setupTrigger() {
+    this.version++;
     const currentVersion = this.version;
-    if (this.startCount > 20) {
+    if (this.startCount > 10) {
       console.error(`[${this.key}] Too many attempts to setup signal, the workflow is halted`);
       return;
     }
@@ -452,6 +453,13 @@ export class RuntimeWorkflow {
       }
       const sessionId = uuidv4();
       console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
+      if (this.triggerSocket) {
+        try {
+          this.triggerSocket.close();
+        } catch (e) {
+          // Ignore
+        }
+      }
       this.triggerSocket = new JsonRpcWebSocket(url);
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
       try {
@@ -462,8 +470,9 @@ export class RuntimeWorkflow {
           fields,
         });
       } catch (e) {
-        console.error(`[${this.key}] Failed to setup signal, the workflow is halted`);
-        throw e;
+        console.error(`[${this.key}] Failed to setup signal:`, e);
+        setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
+        return;
       }
       console.debug(
         `[${this.key}] Started trigger ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`
