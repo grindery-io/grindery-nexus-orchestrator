@@ -229,3 +229,54 @@ export async function requestEarlyAccess({ userAccountId, email }: { userAccount
   );
   return true;
 }
+
+export async function saveWalletAddress({
+  userAccountId,
+  email,
+  walletAddress,
+}: {
+  userAccountId: string;
+  email?: string;
+  walletAddress: string;
+}) {
+  verifyAccountId(userAccountId);
+  if (!walletAddress) {
+    throw new InvalidParamsError("Missing walletAddress");
+  }
+  if (email && !/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email)) {
+    throw new InvalidParamsError("Invalid email");
+  }
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          },
+        ],
+      },
+    ],
+    properties: ["email"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  const newProps: { [key: string]: string } = {
+    wallet_address: walletAddress,
+    ceramic_did: userAccountId,
+  };
+  if (email) {
+    newProps.email = email;
+  } else if (!resp.results[0]?.properties?.email) {
+    newProps.email = `${walletAddress}@wallet.grindery.org`;
+  }
+  if (resp.results[0]) {
+    await hubspotClient.crm.contacts.basicApi.update(resp.results[0].id, { properties: newProps });
+  } else {
+    await hubspotClient.crm.contacts.basicApi.create({ properties: newProps });
+  }
+  return true;
+}
