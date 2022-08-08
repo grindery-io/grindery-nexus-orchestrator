@@ -5,6 +5,10 @@ import express from "express";
 const app = express();
 app.use(bodyParser.json());
 
+app.get("/", (_req, res) => {
+  res.send("Hello World!");
+});
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 app.post("/", require("./index").http);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
