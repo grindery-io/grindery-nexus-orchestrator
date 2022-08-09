@@ -17,6 +17,7 @@
     "@sentry/node": "^6.17.8",
     "axios": "^0.26.1",
     "body-parser": "^1.20.0",
+    "console-log-json": "^2.9.0",
     "core-js": "^3.22",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",

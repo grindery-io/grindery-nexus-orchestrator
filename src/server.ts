@@ -2,6 +2,12 @@ import "dotenv/config";
 import bodyParser from "body-parser";
 import express from "express";
 
+import { LoggerAdaptToConsole } from "console-log-json";
+
+if (process.env.LOG_JSON) {
+  LoggerAdaptToConsole();
+}
+
 const app = express();
 app.use(bodyParser.json());
 
