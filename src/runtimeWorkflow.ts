@@ -23,7 +23,8 @@ const schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
         operation: {
           type: "polling",
           operation: {
-            url: "wss://gnexus-connector-web3.herokuapp.com/",
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            url: process.env.WEB3_CONNECTOR_URL!,
           },
           inputFields: [
             {
@@ -62,7 +63,8 @@ const schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
         operation: {
           type: "polling",
           operation: {
-            url: "wss://gnexus-connector-web3.herokuapp.com/",
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            url: process.env.WEB3_CONNECTOR_URL!,
           },
           inputFields: [
             {
@@ -103,7 +105,8 @@ const schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
         operation: {
           type: "api",
           operation: {
-            url: "wss://gnexus-connector-web3.herokuapp.com/",
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            url: process.env.WEB3_CONNECTOR_URL!,
           },
           inputFields: [
             {
