@@ -5,6 +5,9 @@ import { getCollection } from "./db";
 import { ActionSchema, ConnectorSchema, FieldSchema, OperationSchema, WorkflowSchema } from "./types";
 import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "./ws";
 import { replaceTokens } from "./utils";
+import { createDebug } from "./debug";
+
+const debug = createDebug("runtimeWorkflow");
 
 const schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
   web3: {
@@ -236,13 +239,15 @@ async function runAction({
     }
     const socket = new JsonRpcWebSocket(url);
     try {
-      const result = (await socket.request<ConnectorInput>("runAction", {
+      const requestBody = {
         key: operationKey,
         sessionId,
         executionId,
         credentials: step.credentials,
         fields: { ...input, dryRun },
-      })) as ConnectorOutput;
+      };
+      debug("Sending runAction: ", requestBody);
+      const result = (await socket.request<ConnectorInput>("runAction", requestBody)) as ConnectorOutput;
       return result.payload;
     } finally {
       socket.close();
@@ -466,12 +471,14 @@ export class RuntimeWorkflow {
       this.triggerSocket = new JsonRpcWebSocket(url);
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
       try {
-        await this.triggerSocket.request<ConnectorInput>("setupSignal", {
+        const requestBody = {
           key: trigger.key,
           sessionId,
           credentials: this.workflow.trigger.credentials,
           fields,
-        });
+        };
+        debug("Sending setupSignal: ", requestBody);
+        await this.triggerSocket.request<ConnectorInput>("setupSignal", requestBody);
       } catch (e) {
         console.error(`[${this.key}] Failed to setup signal:`, e);
         setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
