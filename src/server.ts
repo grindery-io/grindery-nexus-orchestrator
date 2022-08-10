@@ -4,10 +4,6 @@ import express from "express";
 
 import { LoggerAdaptToConsole } from "console-log-json";
 
-if (process.env.LOG_JSON) {
-  LoggerAdaptToConsole();
-}
-
 const app = express();
 app.use(bodyParser.json());
 
@@ -21,6 +17,10 @@ app.post("/", require("./index").http);
 app.options(/.*/, require("./index").http);
 
 const port = parseInt(process.env.PORT || "", 10) || 3000;
+
+if (process.env.LOG_JSON) {
+  LoggerAdaptToConsole();
+}
 
 console.log(`Listening on port ${port}`);
 app.listen(port);
