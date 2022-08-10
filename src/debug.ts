@@ -1,4 +1,4 @@
-import * as debug from "debug";
+import debug from "debug";
 
 export function createDebug(name: string) {
   if (!process.env.LOG_JSON) {

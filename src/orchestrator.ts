@@ -31,7 +31,11 @@ async function loadAllWorkflows() {
     });
   }
 }
-setTimeout(loadAllWorkflows, 1000);
+if (process.env.NODE_ENV === "production") {
+  setTimeout(loadAllWorkflows, 1000);
+} else {
+  console.log("In development mode, will not load workflows");
+}
 function stopWorkflow(key: string) {
   if (allWorkflows.has(key)) {
     const existing = allWorkflows.get(key);
