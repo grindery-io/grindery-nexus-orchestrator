@@ -1,10 +1,12 @@
 import "dotenv/config";
 import bodyParser from "body-parser";
+import cors from "cors";
 import express from "express";
 import { LoggerAdaptToConsole } from "console-log-json";
 import routes from "./routing";
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 
 app.get("/", (_req, res) => {
