@@ -2,7 +2,7 @@ import "dotenv/config";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import { LoggerAdaptToConsole } from "console-log-json";
+import { LoggerAdaptToConsole, LOG_LEVEL } from "console-log-json";
 import routes from "./routing";
 
 const app = express();
@@ -23,7 +23,7 @@ app.use("/", routes);
 const port = parseInt(process.env.PORT || "", 10) || 3000;
 
 if (process.env.LOG_JSON) {
-  LoggerAdaptToConsole();
+  LoggerAdaptToConsole({ logLevel: LOG_LEVEL.debug });
 }
 
 console.log(`Listening on http://0.0.0.0:${port}`);
