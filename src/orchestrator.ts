@@ -7,6 +7,7 @@ import { getCollection } from "./db";
 import { OperationSchema, WorkflowSchema } from "./types";
 import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
 import axios from "axios";
+import { identify, track } from "./tracking";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -23,7 +24,7 @@ async function loadAllWorkflows() {
     if (!workflow) {
       break;
     }
-    const runtimeWorkflow = new RuntimeWorkflow(workflow.key, JSON.parse(workflow.workflow));
+    const runtimeWorkflow = new RuntimeWorkflow(workflow.key, JSON.parse(workflow.workflow), workflow.userAccountId);
     allWorkflows.set(workflow.key, runtimeWorkflow);
     runtimeWorkflow.start().catch((e) => {
       console.error(e);
@@ -43,9 +44,9 @@ function stopWorkflow(key: string) {
     allWorkflows.delete(key);
   }
 }
-function loadWorkflow(key: string, workflow: WorkflowSchema) {
+function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) {
   stopWorkflow(key);
-  const runtimeWorkflow = new RuntimeWorkflow(key, workflow);
+  const runtimeWorkflow = new RuntimeWorkflow(key, workflow, accountId);
   allWorkflows.set(key, runtimeWorkflow);
   runtimeWorkflow.start().catch((e) => {
     console.error(e);
@@ -67,8 +68,9 @@ export async function createWorkflow({ userAccountId, workflow }: { userAccountI
     updatedAt: Date.now(),
   });
   if (enabled) {
-    loadWorkflow(key, workflow);
+    loadWorkflow(key, workflow, userAccountId);
   }
+  track(userAccountId, "Create Workflow", { workflow: key });
   return { key };
 }
 
@@ -95,10 +97,11 @@ export async function updateWorkflow({
     throw new Error(`Workflow not found: ${key}`);
   }
   if (enabled) {
-    loadWorkflow(key, workflow);
+    loadWorkflow(key, workflow, userAccountId);
   } else {
     stopWorkflow(key);
   }
+  track(userAccountId, "Update Workflow", { workflow: key });
   return { key };
 }
 
@@ -166,6 +169,7 @@ export async function deleteWorkflow({ userAccountId, key }: { userAccountId: st
     key,
   });
   stopWorkflow(key);
+  track(userAccountId, "Delete Workflow", { workflow: key });
   return { deleted: result.deletedCount === 1 };
 }
 
@@ -179,6 +183,7 @@ export async function testAction({
   input: unknown;
 }) {
   verifyAccountId(userAccountId);
+  track(userAccountId, "Test Action", { connector: step.connector, action: step.operation });
   return await runSingleAction({ step, input, dryRun: true });
 }
 
@@ -231,6 +236,8 @@ export async function requestEarlyAccess({ userAccountId, email }: { userAccount
       ],
     }
   );
+  identify(userAccountId, { email });
+  track(userAccountId, "Request Early Access", { email });
   return true;
 }
 
@@ -274,6 +281,7 @@ export async function saveWalletAddress({
   };
   if (email) {
     newProps.email = email;
+    identify(userAccountId, { email });
   } else if (!resp.results[0]?.properties?.email) {
     newProps.email = `${walletAddress}@wallet.grindery.org`;
   }

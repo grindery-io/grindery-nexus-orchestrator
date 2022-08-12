@@ -6,6 +6,7 @@ import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "./ws";
 import { replaceTokens } from "./utils";
 import { createDebug } from "./debug";
 import { getConnectorSchema } from "./connector";
+import { track } from "./tracking";
 
 const debug = createDebug("runtimeWorkflow");
 
@@ -123,7 +124,7 @@ export class RuntimeWorkflow {
   private startCount = 0;
   private version = 0;
 
-  constructor(private key: string, private workflow: WorkflowSchema) {}
+  constructor(private key: string, private workflow: WorkflowSchema, private accountId: string) {}
   async start() {
     this.running = true;
     this.version++;
@@ -162,7 +163,9 @@ export class RuntimeWorkflow {
       throw new Error("Invalid payload");
     }
     console.debug(`[${this.key}] Received signal`);
+    track(this.accountId, "Received Signal", { workflow: this.key });
     this.runWorkflow(payload).catch((e) => {
+      track(this.accountId, "Workflow Error", { workflow: this.key });
       console.error(e);
       Sentry.captureException(e);
     });
@@ -221,6 +224,7 @@ export class RuntimeWorkflow {
           executionId,
         });
       } catch (e) {
+        track(this.accountId, "Workflow Step Error", { workflow: this.key, index });
         console.debug(`[${this.key}] Failed step ${index}: ${e.toString()}`);
         await logCollection.updateOne(
           {
@@ -236,6 +240,7 @@ export class RuntimeWorkflow {
         );
         return;
       }
+      track(this.accountId, "Workflow Step Complete", { workflow: this.key, index });
       context[`step${index}`] = nextInput;
       await logCollection.updateOne(
         {
@@ -251,6 +256,7 @@ export class RuntimeWorkflow {
       );
       index++;
     }
+    track(this.accountId, "Workflow Complete", { workflow: this.key });
     console.debug(`[${this.key}] Completed`);
   }
   async setupTrigger() {
