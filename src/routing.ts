@@ -42,7 +42,7 @@ router.post("/input-provider/:connector/:key", async (req, res) => {
   }
 });
 
-router.post("/webhook/:connector/:key", async (req, res) => {
+router.all("/webhook/:connector/:key/:path?", async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
   }
@@ -74,6 +74,8 @@ router.post("/webhook/:connector/:key", async (req, res) => {
       sessionId: uuidv4(),
       credentials: {},
       fields: {
+        method: req.method.toUpperCase(),
+        path: req.params.path,
         payload: req.body,
       },
     });
@@ -83,6 +85,7 @@ router.post("/webhook/:connector/:key", async (req, res) => {
       id: req.body.id,
     });
   } catch (e) {
+    console.error(`Error calling webhook ${url}`, e);
     return res.status(500).json({
       jsonrpc: "2.0",
       error: { code: 1, message: e.message || "Unexpected error" },

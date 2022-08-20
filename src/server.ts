@@ -8,6 +8,7 @@ import routes from "./routing";
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/", (_req, res) => {
   res.send("Hello World!");
