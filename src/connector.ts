@@ -1,7 +1,7 @@
 import axios from "axios";
 import { ConnectorSchema } from "./types";
 
-const schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
+const DEFAULT_SCHEMAS: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
   web3: {
     key: "web3",
     name: "Web3 connector",
@@ -145,7 +145,39 @@ const schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
     ],
   },
 };
+let schemas: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = { ...DEFAULT_SCHEMAS };
+
+let currentCommit = "";
+let lastCommitCheck = 0;
+
+async function validateSchemaCache() {
+  if (Date.now() - lastCommitCheck < 60000) {
+    return;
+  }
+  lastCommitCheck = Date.now();
+  const commit = await axios
+    .get(`${process.env.CONNECTOR_SCHEMA_URL}/COMMIT`, { responseType: "text" })
+    .then((response) => (response.data as string).trim())
+    .catch((e) => console.error(e));
+  if (!commit) {
+    console.warn("Connector schema commit not available");
+    return;
+  }
+  if (!currentCommit) {
+    currentCommit = commit;
+    console.log(`Connector schema commit: ${commit}`);
+    return;
+  }
+  if (currentCommit !== commit) {
+    currentCommit = commit;
+    schemas = { ...DEFAULT_SCHEMAS };
+    console.log(`Connector schema commit updated: ${commit}`);
+  }
+}
+validateSchemaCache();
+
 export async function getConnectorSchema(connectorId: string): Promise<ConnectorSchema> {
+  validateSchemaCache();
   if (connectorId in schemas) {
     return schemas[connectorId];
   }
