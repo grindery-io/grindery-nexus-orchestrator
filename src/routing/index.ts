@@ -1,9 +1,10 @@
 import axios from "axios";
 import { AsyncRouter } from "express-async-router";
 import { v4 as uuidv4 } from "uuid";
-import { getConnectorSchema } from "./connector";
-import { ConnectorSchema } from "./types";
-import { ConnectorInput, JsonRpcWebSocket } from "./ws";
+import { getConnectorSchema } from "../connector";
+import { ConnectorSchema } from "grindery-nexus-common-utils/dist/types";
+import { ConnectorInput, JsonRpcWebSocket } from "grindery-nexus-common-utils/dist/ws";
+import OAuthRouter from "./oauth";
 
 const router = AsyncRouter();
 
@@ -95,5 +96,7 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
     socket.close();
   }
 });
+
+router.use("/oauth", OAuthRouter);
 
 export default router;

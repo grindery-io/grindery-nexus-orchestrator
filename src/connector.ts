@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ConnectorSchema } from "./types";
+import { ConnectorSchema } from "grindery-nexus-common-utils/dist/types";
 
 const DEFAULT_SCHEMAS: { [key: string]: ConnectorSchema | Promise<ConnectorSchema> } = {
   web3: {

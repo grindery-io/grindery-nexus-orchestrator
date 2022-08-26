@@ -4,7 +4,7 @@ import { Client as HubSpotClient } from "@hubspot/api-client";
 
 import { InvalidParamsError } from "./jsonrpc";
 import { getCollection } from "./db";
-import { OperationSchema, WorkflowSchema } from "./types";
+import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
 import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
 import axios from "axios";
 import { identify, track } from "./tracking";
@@ -70,7 +70,7 @@ export async function createWorkflow({ userAccountId, workflow }: { userAccountI
   if (enabled) {
     loadWorkflow(key, workflow, userAccountId);
   }
-  track(userAccountId, "Create Workflow", { workflow: key });
+  track(userAccountId, "Create Workflow", { workflow: key, source: workflow.source || "unknown" });
   return { key };
 }
 
@@ -101,7 +101,7 @@ export async function updateWorkflow({
   } else {
     stopWorkflow(key);
   }
-  track(userAccountId, "Update Workflow", { workflow: key });
+  track(userAccountId, "Update Workflow", { workflow: key, source: workflow.source || "unknown" });
   return { key };
 }
 
