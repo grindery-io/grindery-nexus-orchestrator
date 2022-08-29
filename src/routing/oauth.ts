@@ -164,7 +164,7 @@ router.get("/session", async (req, res) => {
     expires_in: 300,
   });
 });
-router.get("/session-register", async (req, res) => {
+router.post("/session-register", async (req, res) => {
   if (!req.body?.refresh_token) {
     res.clearCookie(REFRESH_TOKEN_COOKIE, {
       httpOnly: true,
