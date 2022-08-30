@@ -70,6 +70,10 @@ async function getDb() {
   await createIndexes(cachedClient.db());
   return cachedClient.db();
 }
+getDb().catch((e) => {
+  console.error("Failed to connect to database:", e);
+  process.exit(1);
+});
 export async function getCollection<T extends keyof DbSchema>(collectionName: T): Promise<Collection<DbSchema[T]>> {
   const db = await getDb();
   return db.collection(collectionName);
