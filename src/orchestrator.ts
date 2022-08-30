@@ -2,13 +2,13 @@ import { v4 as uuidv4 } from "uuid";
 import * as Sentry from "@sentry/node";
 import { Client as HubSpotClient } from "@hubspot/api-client";
 
-import { InvalidParamsError } from "./jsonrpc";
 import { getCollection } from "./db";
 import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
 import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
 import axios from "axios";
 import { identify, track } from "./tracking";
 import { getWorkflowEnvironment } from "./utils";
+import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md

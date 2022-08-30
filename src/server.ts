@@ -4,29 +4,22 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import { LoggerAdaptToConsole, LOG_LEVEL } from "console-log-json";
 import routes from "./routing";
+import { runJsonRpcServer } from "grindery-nexus-common-utils/dist/server";
+import { createServer } from "./jsonrpc";
 
-const app = express();
-app.use(cors({ origin: true, credentials: true, maxAge: 86400 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-app.get("/", (_req, res) => {
-  res.send("Hello World!");
-});
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-app.post("/", require("./index").http);
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-app.options(/.*/, require("./index").http);
-
-app.use("/", routes);
-
-const port = parseInt(process.env.PORT || "", 10) || 3000;
 
 if (process.env.LOG_JSON) {
   LoggerAdaptToConsole({ logLevel: LOG_LEVEL.debug });
 }
 
-console.log(`Listening on http://0.0.0.0:${port}`);
-app.listen(port);
+runJsonRpcServer(createServer(), {
+  middlewares: [
+    cors({ origin: true, credentials: true, maxAge: 86400 }),
+    express.json(),
+    express.urlencoded({ extended: true }),
+    cookieParser(),
+  ],
+  mutateRoutes: (app) => {
+    app.use("/", routes);
+  },
+});

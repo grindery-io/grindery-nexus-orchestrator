@@ -3,10 +3,10 @@ import * as Sentry from "@sentry/node";
 import { getCollection } from "./db";
 import { ActionSchema, FieldSchema, OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
 import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "grindery-nexus-common-utils/dist/ws";
-import { replaceTokens } from "./utils";
 import { createDebug } from "./debug";
 import { getConnectorSchema } from "./connector";
 import { track } from "./tracking";
+import { replaceTokens } from "grindery-nexus-common-utils/dist/utils";
 
 const debug = createDebug("runtimeWorkflow");
 
