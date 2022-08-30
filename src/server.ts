@@ -6,7 +6,7 @@ import { LoggerAdaptToConsole, LOG_LEVEL } from "console-log-json";
 import routes from "./routing";
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: true, maxAge: 86400 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
