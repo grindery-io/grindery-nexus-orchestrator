@@ -39,6 +39,7 @@ async function runAction({
   sessionId,
   executionId,
   dryRun,
+  environment,
 }: {
   action: ActionSchema;
   input: { [key: string]: unknown };
@@ -46,11 +47,12 @@ async function runAction({
   sessionId: string;
   executionId: string;
   dryRun?: boolean;
+  environment: string;
 }) {
   let operationKey = step.operation;
   let actionOp = action.operation;
   if (actionOp.type === "blockchain:call") {
-    const web3Connector = await getConnectorSchema("web3");
+    const web3Connector = await getConnectorSchema("web3", environment);
     if (!web3Connector) {
       throw new Error("Web3 connector not found");
     }
@@ -99,12 +101,14 @@ export async function runSingleAction({
   step,
   input,
   dryRun,
+  environment,
 }: {
   step: OperationSchema;
   input: unknown;
   dryRun?: boolean;
+  environment: string;
 }) {
-  const connector = await getConnectorSchema(step.connector);
+  const connector = await getConnectorSchema(step.connector, environment);
   const action = connector.actions?.find((action) => action.key === step.operation);
   if (!action) {
     throw new Error("Invalid action");
@@ -116,6 +120,7 @@ export async function runSingleAction({
     sessionId: uuidv4(),
     executionId: uuidv4(),
     dryRun,
+    environment,
   });
 }
 export class RuntimeWorkflow {
@@ -124,7 +129,12 @@ export class RuntimeWorkflow {
   private startCount = 0;
   private version = 0;
 
-  constructor(private key: string, private workflow: WorkflowSchema, private accountId: string) {}
+  constructor(
+    private key: string,
+    private workflow: WorkflowSchema,
+    private accountId: string,
+    private environment: string
+  ) {}
   async start() {
     this.running = true;
     this.version++;
@@ -189,7 +199,7 @@ export class RuntimeWorkflow {
     let index = 0;
     for (const step of this.workflow.actions) {
       console.debug(`[${this.key}] Running step ${index}: ${step.connector}/${step.operation}`);
-      const connector = await getConnectorSchema(step.connector);
+      const connector = await getConnectorSchema(step.connector, this.environment);
       const action = connector.actions?.find((action) => action.key === step.operation);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let error: any = undefined;
@@ -222,6 +232,7 @@ export class RuntimeWorkflow {
           step,
           sessionId,
           executionId,
+          environment: this.environment,
         });
       } catch (e) {
         track(this.accountId, "Workflow Step Error", { workflow: this.key, index });
@@ -272,14 +283,14 @@ export class RuntimeWorkflow {
       return;
     }
     const currentStartCount = this.startCount;
-    const triggerConnector = await getConnectorSchema(this.workflow.trigger.connector);
+    const triggerConnector = await getConnectorSchema(this.workflow.trigger.connector, this.environment);
     let trigger = triggerConnector.triggers?.find((trigger) => trigger.key === this.workflow.trigger.operation);
     if (!trigger) {
       throw new Error(`Trigger not found: ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`);
     }
     let fields = sanitizeInput(this.workflow.trigger.input, trigger.operation.inputFields || []);
     if (trigger.operation.type === "blockchain:event") {
-      const web3Connector = await getConnectorSchema("web3");
+      const web3Connector = await getConnectorSchema("web3", this.environment);
       if (!web3Connector) {
         throw new Error("Web3 connector not found");
       }

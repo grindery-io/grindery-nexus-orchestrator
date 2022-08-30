@@ -16,6 +16,13 @@ export class Response<T> {
   }
 }
 
+export function getWorkflowEnvironment(workflowKey: string) {
+  if (workflowKey.startsWith("staging-")) {
+    return "staging";
+  }
+  return "production";
+}
+
 export function replaceTokens<T>(obj: T, context: { [key: string]: unknown }): T {
   if (typeof obj === "string") {
     return obj.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_original, key) =>

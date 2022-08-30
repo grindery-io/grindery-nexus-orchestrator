@@ -12,7 +12,10 @@ router.post("/input-provider/:connector/:key", async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
   }
-  const schema: ConnectorSchema | null = await getConnectorSchema(req.params.connector).catch(() => null);
+  const schema: ConnectorSchema | null = await getConnectorSchema(
+    req.params.connector,
+    String(req.query?._grinderyEnvironment || "production")
+  ).catch(() => null);
   if (!schema) {
     return res
       .status(404)
@@ -47,7 +50,10 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
   }
-  const schema: ConnectorSchema | null = await getConnectorSchema(req.params.connector).catch(() => null);
+  const schema: ConnectorSchema | null = await getConnectorSchema(
+    req.params.connector,
+    String(req.query?._grinderyEnvironment || "production")
+  ).catch(() => null);
   if (!schema) {
     return res
       .status(404)

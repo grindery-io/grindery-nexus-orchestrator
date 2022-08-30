@@ -8,6 +8,7 @@ import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dis
 import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
 import axios from "axios";
 import { identify, track } from "./tracking";
+import { getWorkflowEnvironment } from "./utils";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -24,7 +25,12 @@ async function loadAllWorkflows() {
     if (!workflow) {
       break;
     }
-    const runtimeWorkflow = new RuntimeWorkflow(workflow.key, JSON.parse(workflow.workflow), workflow.userAccountId);
+    const runtimeWorkflow = new RuntimeWorkflow(
+      workflow.key,
+      JSON.parse(workflow.workflow),
+      workflow.userAccountId,
+      getWorkflowEnvironment(workflow.key)
+    );
     allWorkflows.set(workflow.key, runtimeWorkflow);
     runtimeWorkflow.start().catch((e) => {
       console.error(e);
@@ -46,7 +52,7 @@ function stopWorkflow(key: string) {
 }
 function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) {
   stopWorkflow(key);
-  const runtimeWorkflow = new RuntimeWorkflow(key, workflow, accountId);
+  const runtimeWorkflow = new RuntimeWorkflow(key, workflow, accountId, getWorkflowEnvironment(key));
   allWorkflows.set(key, runtimeWorkflow);
   runtimeWorkflow.start().catch((e) => {
     console.error(e);
@@ -57,7 +63,10 @@ function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) 
 export async function createWorkflow({ userAccountId, workflow }: { userAccountId: string; workflow: WorkflowSchema }) {
   verifyAccountId(userAccountId);
   const collection = await getCollection("workflows");
-  const key = uuidv4();
+  let key = uuidv4();
+  if (workflow.source?.startsWith("urn:grindery-staging:")) {
+    key = "staging-" + key;
+  }
   const enabled = workflow.state !== "off";
   await collection.insertOne({
     key,
@@ -177,14 +186,16 @@ export async function testAction({
   userAccountId,
   step,
   input,
+  environment,
 }: {
   userAccountId: string;
   step: OperationSchema;
   input: unknown;
+  environment: string;
 }) {
   verifyAccountId(userAccountId);
-  track(userAccountId, "Test Action", { connector: step.connector, action: step.operation });
-  return await runSingleAction({ step, input, dryRun: true });
+  track(userAccountId, "Test Action", { connector: step.connector, action: step.operation, environment });
+  return await runSingleAction({ step, input, dryRun: true, environment: environment || "production" });
 }
 
 export async function isAllowedUser({ userAccountId }: { userAccountId: string }) {

@@ -1,4 +1,5 @@
 import Analytics from "analytics-node";
+import { getWorkflowEnvironment } from "./utils";
 const analytics = process.env.SEGMENT_WRITE_KEY
   ? new Analytics(process.env.SEGMENT_WRITE_KEY, {
       flushInterval: 100,
@@ -6,6 +7,12 @@ const analytics = process.env.SEGMENT_WRITE_KEY
   : null;
 
 export function track(accountId: string, event: string, properties: { [key: string]: unknown } = {}) {
+  if (properties.envirnment === "staging") {
+    return;
+  }
+  if (properties.workflow && getWorkflowEnvironment((properties.workflow as string).toString()) === "staging") {
+    return;
+  }
   analytics?.track({
     userId: accountId,
     event,
