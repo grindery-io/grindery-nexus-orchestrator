@@ -168,14 +168,14 @@ router.post("/session-register", async (req, res) => {
   if (!req.body?.refresh_token) {
     res.clearCookie(REFRESH_TOKEN_COOKIE, {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "none",
       secure: true,
     });
   } else {
     res.cookie(REFRESH_TOKEN_COOKIE, req.body.refresh_token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 365,
-      sameSite: "strict",
+      sameSite: "none",
       secure: true,
     });
   }
