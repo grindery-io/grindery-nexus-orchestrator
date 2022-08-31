@@ -9,6 +9,7 @@ import axios from "axios";
 import { identify, track } from "./tracking";
 import { getWorkflowEnvironment } from "./utils";
 import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
+import { Context } from "./jsonrpc";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -60,7 +61,11 @@ function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) 
   });
 }
 
-export async function createWorkflow({ userAccountId, workflow }: { userAccountId: string; workflow: WorkflowSchema }) {
+export async function createWorkflow(
+  { workflow }: { workflow: WorkflowSchema },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const collection = await getCollection("workflows");
   let key = uuidv4();
@@ -83,15 +88,17 @@ export async function createWorkflow({ userAccountId, workflow }: { userAccountI
   return { key };
 }
 
-export async function updateWorkflow({
-  userAccountId,
-  key,
-  workflow,
-}: {
-  userAccountId: string;
-  key: string;
-  workflow: WorkflowSchema;
-}) {
+export async function updateWorkflow(
+  {
+    key,
+    workflow,
+  }: {
+    key: string;
+    workflow: WorkflowSchema;
+  },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   if (!key) {
     throw new InvalidParamsError("Missing key");
@@ -114,10 +121,11 @@ export async function updateWorkflow({
   return { key };
 }
 
-export async function listWorkflows({ userAccountId }: { userAccountId: string }) {
+export async function listWorkflows(_, { context: { user } }: { context: Context }) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const collection = await getCollection("workflows");
-  const result = await collection.find({
+  const result = collection.find({
     userAccountId,
   });
   return (await result.toArray()).map((x) => ({
@@ -170,7 +178,8 @@ export async function getWorkflowExecutionLog({ executionId }: { executionId: st
   });
 }
 
-export async function deleteWorkflow({ userAccountId, key }: { userAccountId: string; key: string }) {
+export async function deleteWorkflow({ key }: { key: string }, { context: { user } }: { context: Context }) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const collection = await getCollection("workflows");
   const result = await collection.deleteOne({
@@ -182,23 +191,26 @@ export async function deleteWorkflow({ userAccountId, key }: { userAccountId: st
   return { deleted: result.deletedCount === 1 };
 }
 
-export async function testAction({
-  userAccountId,
-  step,
-  input,
-  environment,
-}: {
-  userAccountId: string;
-  step: OperationSchema;
-  input: unknown;
-  environment: string;
-}) {
+export async function testAction(
+  {
+    step,
+    input,
+    environment,
+  }: {
+    step: OperationSchema;
+    input: unknown;
+    environment: string;
+  },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   track(userAccountId, "Test Action", { connector: step.connector, action: step.operation, environment });
   return await runSingleAction({ step, input, dryRun: true, environment: environment || "production" });
 }
 
-export async function isAllowedUser({ userAccountId }: { userAccountId: string }) {
+export async function isAllowedUser(_, { context: { user } }: { context: Context }) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
   const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
@@ -230,7 +242,8 @@ export async function isAllowedUser({ userAccountId }: { userAccountId: string }
   return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
 }
 
-export async function requestEarlyAccess({ userAccountId, email }: { userAccountId: string; email: string }) {
+export async function requestEarlyAccess({ email }: { email: string }, { context: { user } }: { context: Context }) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   if (!email) {
     throw new InvalidParamsError("Missing email");
@@ -252,15 +265,17 @@ export async function requestEarlyAccess({ userAccountId, email }: { userAccount
   return true;
 }
 
-export async function saveWalletAddress({
-  userAccountId,
-  email,
-  walletAddress,
-}: {
-  userAccountId: string;
-  email?: string;
-  walletAddress: string;
-}) {
+export async function saveWalletAddress(
+  {
+    email,
+    walletAddress,
+  }: {
+    email?: string;
+    walletAddress: string;
+  },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   if (!walletAddress) {
     throw new InvalidParamsError("Missing walletAddress");

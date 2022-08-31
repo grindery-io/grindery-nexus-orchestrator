@@ -8,7 +8,7 @@ import { decryptJWT, signJWT, encryptJWT } from "../jwt";
 const router = AsyncRouter();
 
 const AUD_REFRESH_TOKEN = "urn:grindery:refresh-token:v1";
-const AUD_ACCESS_TOKEN = "urn:grindery:access-token:v1";
+export const AUD_ACCESS_TOKEN = "urn:grindery:access-token:v1";
 const AUD_LOGIN_CHALLENGE = "urn:grindery:login-challenge";
 
 const grantByEthSignature = async (res: Response, message: string, signature: string) => {

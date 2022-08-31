@@ -4,11 +4,29 @@ import { v4 as uuidv4 } from "uuid";
 import { getConnectorSchema } from "../connector";
 import { ConnectorSchema } from "grindery-nexus-common-utils/dist/types";
 import { ConnectorInput, JsonRpcWebSocket } from "grindery-nexus-common-utils/dist/ws";
-import OAuthRouter from "./oauth";
+import OAuthRouter, { AUD_ACCESS_TOKEN } from "./oauth";
+import { NextFunction, Request, Response } from "express";
+import { JWTPayload } from "jose";
+import { verifyJWT } from "../jwt";
 
 const router = AsyncRouter();
 
-router.post("/input-provider/:connector/:key", async (req, res) => {
+async function auth(req: Request & { user?: JWTPayload }, res: Response, next: NextFunction) {
+  const m = /Bearer +(.+$)/i.exec(req.get("Authorization") || "");
+  if (m) {
+    try {
+      req.user = (await verifyJWT(m[1], { audience: AUD_ACCESS_TOKEN })).payload;
+    } catch (e) {
+      return res.status(403).json({ error: "Invalid access token" });
+    }
+  }
+  if (!req.user) {
+    return res.status(403).json({ error: "Authentication required" });
+  }
+  return next();
+}
+
+router.post("/input-provider/:connector/:key", auth, async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
   }
