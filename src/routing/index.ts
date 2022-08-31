@@ -11,7 +11,6 @@ import { verifyJWT } from "../jwt";
 
 const router = AsyncRouter();
 
-/*
 async function auth(req: Request & { user?: JWTPayload }, res: Response, next: NextFunction) {
   const m = /Bearer +(.+$)/i.exec(req.get("Authorization") || "");
   if (m) {
@@ -26,8 +25,8 @@ async function auth(req: Request & { user?: JWTPayload }, res: Response, next: N
   }
   return next();
 }
-*/
-router.post("/input-provider/:connector/:key", async (req, res) => {
+
+router.post("/input-provider/:connector/:key", auth, async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
   }

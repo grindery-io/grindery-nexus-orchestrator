@@ -26,7 +26,7 @@ export type Context = {
   user?: JWTPayload;
 };
 
-export const authMiddleware = async (
+const authMiddleware = async (
   next: JSONRPCServerMiddlewareNext<ServerParams>,
   request: JSONRPCRequest,
   serverParams: ServerParams<Context> | undefined
@@ -62,7 +62,7 @@ async function authenticate() {
 
 export function createServer() {
   const server = createJsonRpcServer<Context>();
-  // server.applyMiddleware(authMiddleware);
+  server.applyMiddleware(authMiddleware);
   const methods = {
     authenticate,
     createWorkflow,
