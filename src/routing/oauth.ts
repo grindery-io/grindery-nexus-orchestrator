@@ -41,7 +41,7 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   const messageHash = ethLib.Hash.keccak256(Buffer.concat([preamble, messageBuffer]));
   try {
     const recoveredAddress = ethLib.Account.recover(messageHash, signature);
-    if ("eip155:1:" + recoveredAddress.toLowerCase() !== decryptResult.payload.sub) {
+    if ("eip155:1:" + recoveredAddress.toLowerCase() !== decryptResult.payload.sub?.toLowerCase()) {
       return res
         .status(400)
         .json({ error: "invalid_request", error_description: "Signature is not from correct wallet" });
