@@ -139,7 +139,7 @@ router.get("/eth-get-message", async (req, res) => {
 });
 const REFRESH_TOKEN_COOKIE = "grinderyNexusRefreshToken";
 router.get("/session", async (req, res) => {
-  const address = String(req.query.address || "").toLowerCase();
+  const address = String(req.query.address || "");
   if (!/^0x[0-9a-f]{40}$/i.test(address)) {
     return res.status(400).json({ error: "invalid_eth_address" });
   }
