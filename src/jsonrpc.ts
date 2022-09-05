@@ -21,6 +21,7 @@ import { verifyJWT } from "./jwt";
 import { AUD_ACCESS_TOKEN } from "./routing/oauth";
 import assert from "assert";
 import { JWTPayload } from "jose";
+import { createWorkspace, deleteWorkspace, listWorkspaces, updateWorkspace, workspaceAddAdmin, workspaceAddUser, workspaceRemoveAdmin, workspaceRemoveUser } from "./workspace";
 
 export type Context = {
   user?: JWTPayload;
@@ -64,7 +65,8 @@ export function createServer() {
   const server = createJsonRpcServer<Context>();
   server.applyMiddleware(authMiddleware);
   const methods = {
-    authenticate,
+    authenticate, // For WebSocket only
+
     createWorkflow,
     deleteWorkflow,
     updateWorkflow,
@@ -75,6 +77,15 @@ export function createServer() {
     isAllowedUser,
     requestEarlyAccess,
     saveWalletAddress,
+
+    createWorkspace,
+    updateWorkspace,
+    deleteWorkspace,
+    listWorkspaces,
+    workspaceAddUser,
+    workspaceRemoveUser,
+    workspaceAddAdmin,
+    workspaceRemoveAdmin,
   };
   for (const [name, func] of Object.entries(methods) as [
     string,

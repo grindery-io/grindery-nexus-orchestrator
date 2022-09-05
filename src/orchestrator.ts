@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as Sentry from "@sentry/node";
 import { Client as HubSpotClient } from "@hubspot/api-client";
 
-import { getCollection } from "./db";
+import { DbSchema, getCollection } from "./db";
 import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
 import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
 import axios from "axios";
@@ -10,6 +10,7 @@ import { identify, track } from "./tracking";
 import { getWorkflowEnvironment } from "./utils";
 import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { Context } from "./jsonrpc";
+import { throwNotFoundOrPermissionError } from "./workspace";
 
 function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -61,12 +62,25 @@ function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) 
   });
 }
 
+async function checkWorkspacePermission(workspaceKey: string, userAccountId: string) {
+  const wsCollection = await getCollection("workspaces");
+  const workspace = await wsCollection.findOne({
+    $and: [{ workspaceKey }, { $or: [{ admins: { $in: [userAccountId] } }, { admins: { $in: [userAccountId] } }] }],
+  });
+  if (!workspace) {
+    await throwNotFoundOrPermissionError(workspaceKey);
+  }
+}
+
 export async function createWorkflow(
-  { workflow }: { workflow: WorkflowSchema },
+  { workflow, workspaceKey }: { workflow: WorkflowSchema; workspaceKey?: string },
   { context: { user } }: { context: Context }
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
+  if (workspaceKey) {
+    await checkWorkspacePermission(workspaceKey, userAccountId);
+  }
   const collection = await getCollection("workflows");
   let key = uuidv4();
   if (workflow.source?.startsWith("urn:grindery-staging:")) {
@@ -75,6 +89,7 @@ export async function createWorkflow(
   const enabled = workflow.state !== "off";
   await collection.insertOne({
     key,
+    ...(workspaceKey ? { workspaceKey } : {}),
     userAccountId,
     workflow: JSON.stringify(workflow),
     enabled,
@@ -86,6 +101,22 @@ export async function createWorkflow(
   }
   track(userAccountId, "Create Workflow", { workflow: key, source: workflow.source || "unknown" });
   return { key };
+}
+
+async function fetchWorkflowAndCheckPermission(key: string, userAccountId: string) {
+  const collection = await getCollection("workflows");
+  const existingWorkflow = await collection.findOne({ key });
+  if (!existingWorkflow) {
+    throw new Error(`Workflow not found: ${key}`);
+  }
+  if (existingWorkflow.workspaceKey) {
+    await checkWorkspacePermission(existingWorkflow.workspaceKey, userAccountId);
+  } else {
+    if (existingWorkflow.userAccountId !== userAccountId) {
+      throw new Error("User has no permission to change the workflow");
+    }
+  }
+  return existingWorkflow;
 }
 
 export async function updateWorkflow(
@@ -103,15 +134,10 @@ export async function updateWorkflow(
   if (!key) {
     throw new InvalidParamsError("Missing key");
   }
+  await fetchWorkflowAndCheckPermission(key, userAccountId);
   const collection = await getCollection("workflows");
   const enabled = workflow.state !== "off";
-  const result = await collection.updateOne(
-    { key, userAccountId },
-    { $set: { workflow: JSON.stringify(workflow), enabled, updatedAt: Date.now() } }
-  );
-  if (result.matchedCount === 0) {
-    throw new Error(`Workflow not found: ${key}`);
-  }
+  await collection.updateOne({ key }, { $set: { workflow: JSON.stringify(workflow), enabled, updatedAt: Date.now() } });
   if (enabled) {
     loadWorkflow(key, workflow, userAccountId);
   } else {
@@ -121,12 +147,19 @@ export async function updateWorkflow(
   return { key };
 }
 
-export async function listWorkflows(_, { context: { user } }: { context: Context }) {
+export async function listWorkflows(
+  { workspaceKey }: { workspaceKey?: string },
+  { context: { user } }: { context: Context }
+) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
+  if (workspaceKey) {
+    await checkWorkspacePermission(workspaceKey, userAccountId);
+  }
   const collection = await getCollection("workflows");
   const result = collection.find({
     userAccountId,
+    workspaceKey: workspaceKey ? { $eq: workspaceKey } : { $in: [undefined, ""] },
   });
   return (await result.toArray()).map((x) => ({
     ...x,
@@ -135,20 +168,26 @@ export async function listWorkflows(_, { context: { user } }: { context: Context
   }));
 }
 
-export async function getWorkflowExecutions({
-  workflowKey,
-  since,
-  until,
-  limit,
-}: {
-  workflowKey: string;
-  since?: number;
-  until?: number;
-  limit?: number;
-}) {
+export async function getWorkflowExecutions(
+  {
+    workflowKey,
+    since,
+    until,
+    limit,
+  }: {
+    workflowKey: string;
+    since?: number;
+    until?: number;
+    limit?: number;
+  },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
   if (!workflowKey) {
     throw new InvalidParamsError("Missing workflowKey");
   }
+  await fetchWorkflowAndCheckPermission(workflowKey, userAccountId);
   const collection = await getCollection("workflowExecutions");
   const result = await collection.aggregate([
     { $match: { workflowKey, startedAt: { $gte: since || 0, $lte: until || Infinity } } },
@@ -163,7 +202,12 @@ export async function getWorkflowExecutions({
   ]);
   return (await result.toArray()).map((x) => ({ executionId: x._id, startedAt: x.startedAt }));
 }
-export async function getWorkflowExecutionLog({ executionId }: { executionId: string }) {
+export async function getWorkflowExecutionLog(
+  { executionId }: { executionId: string },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
   if (!executionId) {
     throw new InvalidParamsError("Missing executionId");
   }
@@ -172,18 +216,22 @@ export async function getWorkflowExecutionLog({ executionId }: { executionId: st
     executionId,
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (await result.toArray()).map((x: any) => {
+  const ret = (await result.toArray()).map((x: any) => {
     delete x._id;
-    return x;
+    return x as DbSchema["workflowExecutions"];
   });
+  if (ret.length) {
+    await fetchWorkflowAndCheckPermission(ret[0].workflowKey, userAccountId);
+  }
+  return ret;
 }
 
 export async function deleteWorkflow({ key }: { key: string }, { context: { user } }: { context: Context }) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
+  await fetchWorkflowAndCheckPermission(key, userAccountId);
   const collection = await getCollection("workflows");
   const result = await collection.deleteOne({
-    userAccountId,
     key,
   });
   stopWorkflow(key);

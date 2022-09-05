@@ -2,9 +2,10 @@ import { Collection, CreateIndexesOptions, Db, IndexSpecification, MongoClient }
 
 let cachedClient: MongoClient | Promise<MongoClient> | null = null;
 
-type DbSchema = {
+export type DbSchema = {
   workflows: {
     key: string;
+    workspaceKey?: string;
     userAccountId: string;
     workflow: string; // JSON string
     enabled: boolean;
@@ -25,7 +26,7 @@ type DbSchema = {
   workspaces: {
     key: string;
     title: string;
-    iconUrl: string;
+    iconUrl?: string;
     creator: string;
     admins: string[];
     users: string[];
