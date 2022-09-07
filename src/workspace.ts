@@ -7,19 +7,37 @@ import { Context } from "./jsonrpc";
 import { track } from "./tracking";
 
 export async function createWorkspace(
-  { title, iconUrl }: { title: string; iconUrl?: string },
+  {
+    title,
+    iconUrl,
+    about,
+    admins,
+    users,
+  }: { title: string; iconUrl?: string; about?: string; admins?: string[]; users?: string[] },
   { context: { user } }: { context: Context }
 ) {
   const userAccountId = user?.sub || "";
+  admins = admins || [userAccountId];
+  users = users || [];
+  if (!Array.isArray(admins)) {
+    throw new InvalidParamsError("admins must be an array");
+  }
+  if (!Array.isArray(users)) {
+    throw new InvalidParamsError("users must be an array");
+  }
+  if (!admins.includes(userAccountId)) {
+    throw new InvalidParamsError("admins must include current user");
+  }
   const collection = await getCollection("workspaces");
   const key = "ws-" + uuidv4();
   await collection.insertOne({
     key,
     title,
     iconUrl,
+    about,
     creator: userAccountId,
-    admins: [userAccountId],
-    users: [],
+    admins,
+    users,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   });
@@ -49,15 +67,37 @@ async function updateWorkspaceInternal(
   return { key };
 }
 export async function updateWorkspace(
-  { key, title, iconUrl }: { key: string; title: string; iconUrl?: string },
+  {
+    key,
+    title,
+    iconUrl,
+    about,
+    admins,
+    users,
+  }: { key: string; title?: string; iconUrl?: string; about?: string; admins?: string[]; users?: string[] },
   params: { context: Context }
 ) {
+  const userAccountId = params.context.user?.sub || "";
+  if (admins) {
+    if (!Array.isArray(admins)) {
+      throw new InvalidParamsError("admins must be an array");
+    }
+    if (!admins.includes(userAccountId)) {
+      throw new InvalidParamsError("admins must include current user");
+    }
+  }
+  if (users && !Array.isArray(users)) {
+    throw new InvalidParamsError("users must be an array");
+  }
   const result = await updateWorkspaceInternal(
     key,
     {
       $set: {
-        title,
-        iconUrl,
+        ...(title === undefined ? {} : { title }),
+        ...(iconUrl === undefined ? {} : { iconUrl }),
+        ...(about === undefined ? {} : { about }),
+        ...(admins ? {} : { admins }),
+        ...(users ? {} : { users }),
         updatedAt: Date.now(),
       },
     },
@@ -69,6 +109,10 @@ export async function updateWorkspace(
 
 export async function deleteWorkspace({ key }: { key: string }, { context: { user } }: { context: Context }) {
   const userAccountId = user?.sub || "";
+  const workflowCollection = await getCollection("workflows");
+  if ((await workflowCollection.countDocuments({ workspaceKey: key }, { limit: 1 })) > 0) {
+    throw new Error("Can't delete a workspace that contains workflow");
+  }
   const collection = await getCollection("workspaces");
   const result = await collection.deleteOne({ key, admins: { $in: [userAccountId] } });
   if (result.deletedCount === 0) {
@@ -76,6 +120,36 @@ export async function deleteWorkspace({ key }: { key: string }, { context: { use
   }
   track(userAccountId, "Delete Workspace", { workspace: key });
   return { deleted: true };
+}
+
+export async function leaveWorkspace({ key }: { key: string }, { context: { user } }: { context: Context }) {
+  const userAccountId = user?.sub || "";
+  const collection = await getCollection("workspaces");
+  const result = await collection.findOne({ key });
+  if (!result) {
+    throw new Error(`Workspace not found: ${key}`);
+  }
+  if (!result.users.includes(userAccountId) && !result.admins.includes(userAccountId)) {
+    throw new Error(`User ${userAccountId} is not in this workspace: ${key}`);
+  }
+  if (result.admins.length === 1 && result.admins[0] === userAccountId) {
+    throw new Error(`Can't leave workspace ${key} because user ${userAccountId} is the only admin in the workspace`);
+  }
+  await collection.updateOne(
+    { key },
+    {
+      $set: {
+        // Not using $pull to avoid race condition
+        ...(result.admins.includes(userAccountId) ? { admins: result.admins.filter((x) => x !== userAccountId) } : {}),
+        updatedAt: Date.now(),
+      },
+      $pull: {
+        users: userAccountId,
+      },
+    }
+  );
+  track(userAccountId, "Leave Workspace", { workspace: key });
+  return { left: true };
 }
 
 export async function listWorkspaces(_, { context: { user } }: { context: Context }) {

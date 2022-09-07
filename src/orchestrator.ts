@@ -65,7 +65,7 @@ function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) 
 async function checkWorkspacePermission(workspaceKey: string, userAccountId: string) {
   const wsCollection = await getCollection("workspaces");
   const workspace = await wsCollection.findOne({
-    $and: [{ workspaceKey }, { $or: [{ admins: { $in: [userAccountId] } }, { admins: { $in: [userAccountId] } }] }],
+    $and: [{ workspaceKey }, { $or: [{ admins: { $in: [userAccountId] } }, { users: { $in: [userAccountId] } }] }],
   });
   if (!workspace) {
     await throwNotFoundOrPermissionError(workspaceKey);
@@ -144,6 +144,37 @@ export async function updateWorkflow(
     stopWorkflow(key);
   }
   track(userAccountId, "Update Workflow", { workflow: key, source: workflow.source || "unknown" });
+  return { key };
+}
+
+export async function moveWorkflowToWorkspace(
+  {
+    key,
+    newWorkspaceKey,
+  }: {
+    key: string;
+    newWorkspaceKey: string;
+  },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  if (!key) {
+    throw new InvalidParamsError("Missing key");
+  }
+  await fetchWorkflowAndCheckPermission(key, userAccountId);
+  if (newWorkspaceKey) {
+    await checkWorkspacePermission(newWorkspaceKey, userAccountId);
+  }
+  const collection = await getCollection("workflows");
+  await collection.updateOne(
+    { key },
+    {
+      $set: { ...(newWorkspaceKey ? { workspaceKey: newWorkspaceKey } : {}), updatedAt: Date.now() },
+      ...(newWorkspaceKey ? {} : { $unset: { workspaceKey: "" } }),
+    }
+  );
+  track(userAccountId, "Move Workflow", { workflow: key });
   return { key };
 }
 

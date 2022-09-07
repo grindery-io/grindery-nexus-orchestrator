@@ -15,13 +15,14 @@ import {
   isAllowedUser,
   requestEarlyAccess,
   saveWalletAddress,
+  moveWorkflowToWorkspace,
 } from "./orchestrator";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { verifyJWT } from "./jwt";
 import { AUD_ACCESS_TOKEN } from "./routing/oauth";
 import assert from "assert";
 import { JWTPayload } from "jose";
-import { createWorkspace, deleteWorkspace, listWorkspaces, updateWorkspace, workspaceAddAdmin, workspaceAddUser, workspaceRemoveAdmin, workspaceRemoveUser } from "./workspace";
+import { createWorkspace, deleteWorkspace, leaveWorkspace, listWorkspaces, updateWorkspace, workspaceAddAdmin, workspaceAddUser, workspaceRemoveAdmin, workspaceRemoveUser } from "./workspace";
 
 export type Context = {
   user?: JWTPayload;
@@ -70,6 +71,7 @@ export function createServer() {
     createWorkflow,
     deleteWorkflow,
     updateWorkflow,
+    moveWorkflowToWorkspace,
     getWorkflowExecutions,
     getWorkflowExecutionLog,
     listWorkflows,
@@ -81,6 +83,7 @@ export function createServer() {
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,
+    leaveWorkspace,
     listWorkspaces,
     workspaceAddUser,
     workspaceRemoveUser,

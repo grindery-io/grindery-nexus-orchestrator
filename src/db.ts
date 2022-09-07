@@ -27,6 +27,7 @@ export type DbSchema = {
     key: string;
     title: string;
     iconUrl?: string;
+    about?: string;
     creator: string;
     admins: string[];
     users: string[];
