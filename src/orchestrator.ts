@@ -65,7 +65,7 @@ function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) 
 async function checkWorkspacePermission(workspaceKey: string, userAccountId: string) {
   const wsCollection = await getCollection("workspaces");
   const workspace = await wsCollection.findOne({
-    $and: [{ workspaceKey }, { $or: [{ admins: { $in: [userAccountId] } }, { users: { $in: [userAccountId] } }] }],
+    $and: [{ key: workspaceKey }, { $or: [{ admins: { $in: [userAccountId] } }, { users: { $in: [userAccountId] } }] }],
   });
   if (!workspace) {
     await throwNotFoundOrPermissionError(workspaceKey);
