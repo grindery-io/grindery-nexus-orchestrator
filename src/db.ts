@@ -41,12 +41,17 @@ const INDEXES: { [name in keyof DbSchema]: [IndexSpecification, CreateIndexesOpt
     [{ key: 1 }, { unique: true }],
     [{ userAccountId: 1 }, {}],
     [{ userAccountId: 1, key: 1 }, { unique: true }],
+    [{ workspaceKey: 1 }, {}],
   ],
   workflowExecutions: [
     [{ workflowKey: 1 }, {}],
     [{ executionId: 1 }, {}],
   ],
-  workspaces: [[{ key: 1 }, { unique: true }]],
+  workspaces: [
+    [{ key: 1 }, { unique: true }],
+    [{ admins: 1 }, {}],
+    [{ users: 1 }, {}],
+  ],
 };
 
 async function createIndexes(db: Db) {
