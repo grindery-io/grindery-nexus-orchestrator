@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { AsyncRouter } from "express-async-router";
 import * as jose from "jose";
 import * as ethLib from "eth-lib";
 import base64url from "base64url";
 import { decryptJWT, signJWT, encryptJWT } from "../jwt";
+import { createAsyncRouter } from "./createAsyncRouter";
 
-const router = AsyncRouter();
+const router = createAsyncRouter();
 
 const AUD_REFRESH_TOKEN = "urn:grindery:refresh-token:v1";
 export const AUD_ACCESS_TOKEN = "urn:grindery:access-token:v1";

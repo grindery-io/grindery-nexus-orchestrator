@@ -1,5 +1,4 @@
 import axios from "axios";
-import { AsyncRouter } from "express-async-router";
 import { v4 as uuidv4 } from "uuid";
 import { getConnectorSchema } from "../connector";
 import { ConnectorSchema } from "grindery-nexus-common-utils/dist/types";
@@ -8,8 +7,9 @@ import OAuthRouter, { AUD_ACCESS_TOKEN } from "./oauth";
 import { NextFunction, Request, Response } from "express";
 import { JWTPayload } from "jose";
 import { verifyJWT } from "../jwt";
+import { createAsyncRouter } from "./createAsyncRouter";
 
-const router = AsyncRouter();
+const router = createAsyncRouter();
 
 async function auth(req: Request & { user?: JWTPayload }, res: Response, next: NextFunction) {
   const m = /Bearer +(.+$)/i.exec(req.get("Authorization") || "");
