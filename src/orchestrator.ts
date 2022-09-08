@@ -189,7 +189,7 @@ export async function listWorkflows(
   }
   const collection = await getCollection("workflows");
   const result = collection.find({
-    userAccountId,
+    ...(workspaceKey ? {} : { userAccountId }),
     workspaceKey: workspaceKey ? { $eq: workspaceKey } : { $in: [undefined, ""] },
   });
   return (await result.toArray()).map((x) => ({
