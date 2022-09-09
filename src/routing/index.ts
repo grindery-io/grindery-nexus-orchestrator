@@ -2,7 +2,7 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { getConnectorSchema } from "../connector";
 import { ConnectorSchema } from "grindery-nexus-common-utils/dist/types";
-import { ConnectorInput, JsonRpcWebSocket } from "grindery-nexus-common-utils/dist/ws";
+import { ConnectorInput, JsonRpcWebSocket } from "grindery-nexus-common-utils";
 import OAuthRouter, { AUD_ACCESS_TOKEN } from "./oauth";
 import { NextFunction, Request, Response } from "express";
 import { JWTPayload } from "jose";
