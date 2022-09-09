@@ -90,3 +90,6 @@ export const verifyJWT = async (token: string, options: jose.JWTVerifyOptions) =
     algorithms: ["ES256"],
     ...options,
   });
+export async function getPublicJwk() {
+  return jose.exportJWK((await KEYS).ECDSA_PUBLIC);
+}

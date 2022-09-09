@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import * as jose from "jose";
 import * as ethLib from "eth-lib";
 import base64url from "base64url";
-import { decryptJWT, signJWT, encryptJWT } from "../jwt";
+import { decryptJWT, signJWT, encryptJWT, getPublicJwk } from "../jwt";
 import { createAsyncRouter } from "./createAsyncRouter";
 
 const router = createAsyncRouter();
@@ -180,6 +180,11 @@ router.post("/session-register", async (req, res) => {
     });
   }
   return res.json({ success: true });
+});
+router.get("/jwks", async (_, res) => {
+  return res.json({
+    keys: [await getPublicJwk()],
+  });
 });
 
 export default router;
