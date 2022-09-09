@@ -4,7 +4,7 @@ import { getCollection } from "./db";
 import { ActionSchema, FieldSchema, OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
 import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "grindery-nexus-common-utils";
 import { createDebug } from "./debug";
-import { getConnectorSchema } from "./connector";
+import { getConnectorSchema } from "grindery-nexus-common-utils";
 import { track } from "./tracking";
 import { replaceTokens } from "grindery-nexus-common-utils/dist/utils";
 
