@@ -137,6 +137,14 @@ router.get("/eth-get-message", async (req, res) => {
     expires_in: 300,
   });
 });
+router.get("/flow-get-nonce", async (_, res) => {
+  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: "flow::unknown" }, "300s");
+  return res.json({
+    app_identifier: "Grindery Nexus",
+    nonce: Buffer.from(token).toString("hex"),
+    expires_in: 300,
+  });
+});
 const REFRESH_TOKEN_COOKIE = "grinderyNexusRefreshToken";
 router.get("/session", async (req, res) => {
   const address = String(req.query.address || "");
