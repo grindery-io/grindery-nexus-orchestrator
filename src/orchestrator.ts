@@ -260,13 +260,19 @@ export async function getWorkflowExecutionLog(
 export async function deleteWorkflow({ key }: { key: string }, { context: { user } }: { context: Context }) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  await fetchWorkflowAndCheckPermission(key, userAccountId);
+  const workflow = await fetchWorkflowAndCheckPermission(key, userAccountId);
   const collection = await getCollection("workflows");
   const result = await collection.deleteOne({
     key,
   });
   stopWorkflow(key);
-  track(userAccountId, "Delete Workflow", { workflow: key });
+  let source: string | undefined;
+  try {
+    source = (JSON.parse(workflow.workflow) as WorkflowSchema).source;
+  } catch (e) {
+    console.warn(`[${workflow.key}] Failed to parse workflow: `, e);
+  }
+  track(userAccountId, "Delete Workflow", { workflow: key, source: source || "unknown" });
   return { deleted: result.deletedCount === 1 };
 }
 
