@@ -1,9 +1,14 @@
 import { Request, Response } from "express";
+import { AppUtils, config } from "@onflow/fcl";
 import * as jose from "jose";
 import * as ethLib from "eth-lib";
 import base64url from "base64url";
 import { decryptJWT, signJWT, encryptJWT, getPublicJwk } from "../jwt";
 import { createAsyncRouter } from "./createAsyncRouter";
+
+config({
+  "accessNode.api": "https://rest-mainnet.onflow.org",
+});
 
 const router = createAsyncRouter();
 
@@ -11,6 +16,26 @@ const AUD_REFRESH_TOKEN = "urn:grindery:refresh-token:v1";
 export const AUD_ACCESS_TOKEN = "urn:grindery:access-token:v1";
 const AUD_LOGIN_CHALLENGE = "urn:grindery:login-challenge";
 
+const FLOW_APP_ID = "Grindery Nexus";
+const FLOW_AUTH_SUB = "flow::unknown";
+
+const REFRESH_TOKEN_COOKIE = "grinderyNexusRefreshToken";
+
+async function tokenResponse(res: Response, subject: string) {
+  const refreshToken = await encryptJWT({ aud: AUD_REFRESH_TOKEN, sub: subject }, "1000y");
+  res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+    sameSite: "strict",
+    secure: true,
+  });
+  return res.json({
+    access_token: await signJWT({ aud: AUD_ACCESS_TOKEN, sub: subject }, "3600s"),
+    token_type: "bearer",
+    expires_in: 3600,
+    refresh_token: refreshToken,
+  });
+}
 const grantByEthSignature = async (res: Response, message: string, signature: string) => {
   if (!message) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing message" });
@@ -49,20 +74,33 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   } catch (e) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid signature" });
   }
-  const refreshToken = await encryptJWT({ aud: AUD_REFRESH_TOKEN, sub: decryptResult.payload.sub }, "1000y");
-  res.cookie("grinderyNexusRefreshToken", refreshToken, {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 365,
-    sameSite: "strict",
-    secure: true,
-  });
-  return res.json({
-    access_token: await signJWT({ aud: AUD_ACCESS_TOKEN, sub: decryptResult.payload.sub }, "3600s"),
-    token_type: "bearer",
-    expires_in: 3600,
-    refresh_token: refreshToken,
-  });
+  const subject = decryptResult.payload.sub;
+  return await tokenResponse(res, subject);
 };
+async function grantByFlow(
+  res: Response,
+  { address, nonce, signatures }: { address: string; nonce: string; signatures: unknown }
+) {
+  if (!address) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Missing address" });
+  }
+  if (!signatures) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Missing signatures" });
+  }
+  try {
+    await decryptJWT(Buffer.from(nonce, "hex").toString(), {
+      audience: AUD_LOGIN_CHALLENGE,
+      subject: FLOW_AUTH_SUB,
+    });
+  } catch (e) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Invalid or expired nonce" });
+  }
+  const isValid = await AppUtils.verifyAccountProof(FLOW_APP_ID, { address, nonce, signatures });
+  if (!isValid) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Invalid account proof" });
+  }
+  return await tokenResponse(res, "flow:mainnet:" + address.toLowerCase());
+}
 
 const GRANT_MODES = {
   "urn:grindery:eth-signature": async (req: Request, res: Response) => {
@@ -76,6 +114,9 @@ const GRANT_MODES = {
       decodedParams = JSON.parse(base64url.decode(String(req.query?.code) || ""));
     } catch (e) {
       return res.status(400).json({ error: "invalid_request", error_description: "Invalid code" });
+    }
+    if (decodedParams.type === "flow") {
+      return await grantByFlow(res, decodedParams);
     }
     const message = decodedParams?.message || "";
     const signature = decodedParams?.signature || "";
@@ -138,14 +179,13 @@ router.get("/eth-get-message", async (req, res) => {
   });
 });
 router.get("/flow-get-nonce", async (_, res) => {
-  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: "flow::unknown" }, "300s");
+  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: FLOW_AUTH_SUB }, "300s");
   return res.json({
-    app_identifier: "Grindery Nexus",
+    app_identifier: FLOW_APP_ID,
     nonce: Buffer.from(token).toString("hex"),
     expires_in: 300,
   });
 });
-const REFRESH_TOKEN_COOKIE = "grinderyNexusRefreshToken";
 router.get("/session", async (req, res) => {
   const address = String(req.query.address || "");
   if (!/^0x[0-9a-f]{40}$/i.test(address)) {

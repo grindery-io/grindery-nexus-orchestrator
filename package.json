@@ -14,6 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "@hubspot/api-client": "^7.0.1",
+    "@onflow/fcl": "^1.2.1",
     "@sentry/node": "^6.17.8",
     "@tradle/key-encoder": "^2.1.1",
     "analytics-node": "^6.2.0",
