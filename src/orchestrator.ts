@@ -99,7 +99,11 @@ export async function createWorkflow(
   if (enabled) {
     loadWorkflow(key, workflow, userAccountId);
   }
-  track(userAccountId, "Create Workflow", { workflow: key, source: workflow.source || "unknown" });
+  track(userAccountId, "Create Workflow", {
+    workflow: key,
+    workspace: workspaceKey,
+    source: workflow.source || "unknown",
+  });
   return { key };
 }
 
@@ -134,7 +138,7 @@ export async function updateWorkflow(
   if (!key) {
     throw new InvalidParamsError("Missing key");
   }
-  await fetchWorkflowAndCheckPermission(key, userAccountId);
+  const existingWorkflow = await fetchWorkflowAndCheckPermission(key, userAccountId);
   const collection = await getCollection("workflows");
   const enabled = workflow.state !== "off";
   await collection.updateOne({ key }, { $set: { workflow: JSON.stringify(workflow), enabled, updatedAt: Date.now() } });
@@ -143,7 +147,11 @@ export async function updateWorkflow(
   } else {
     stopWorkflow(key);
   }
-  track(userAccountId, "Update Workflow", { workflow: key, source: workflow.source || "unknown" });
+  track(userAccountId, "Update Workflow", {
+    workflow: key,
+    workspace: existingWorkflow.workspaceKey,
+    source: workflow.source || "unknown",
+  });
   return { key };
 }
 
@@ -174,7 +182,7 @@ export async function moveWorkflowToWorkspace(
       ...(newWorkspaceKey ? {} : { $unset: { workspaceKey: "" } }),
     }
   );
-  track(userAccountId, "Move Workflow", { workflow: key });
+  track(userAccountId, "Move Workflow", { workflow: key, newWorkspace: newWorkspaceKey });
   return { key };
 }
 
@@ -272,7 +280,11 @@ export async function deleteWorkflow({ key }: { key: string }, { context: { user
   } catch (e) {
     console.warn(`[${workflow.key}] Failed to parse workflow: `, e);
   }
-  track(userAccountId, "Delete Workflow", { workflow: key, source: source || "unknown" });
+  track(userAccountId, "Delete Workflow", {
+    workflow: key,
+    workspace: workflow.workspaceKey,
+    source: source || "unknown",
+  });
   return { deleted: result.deletedCount === 1 };
 }
 
