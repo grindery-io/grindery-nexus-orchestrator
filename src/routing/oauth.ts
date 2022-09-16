@@ -8,6 +8,7 @@ import { createAsyncRouter } from "./createAsyncRouter";
 
 config({
   "accessNode.api": "https://rest-mainnet.onflow.org",
+  "flow.network": "mainnet",
 });
 
 const router = createAsyncRouter();
