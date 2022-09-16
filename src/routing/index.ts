@@ -7,7 +7,7 @@ import OAuthRouter, { AUD_ACCESS_TOKEN } from "./oauth";
 import { NextFunction, Request, Response } from "express";
 import { JWTPayload } from "jose";
 import { verifyJWT } from "../jwt";
-import { createAsyncRouter } from "./createAsyncRouter";
+import { createAsyncRouter } from "./utils";
 
 const router = createAsyncRouter();
 
