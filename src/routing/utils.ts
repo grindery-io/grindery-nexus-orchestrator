@@ -35,6 +35,9 @@ export async function tokenResponse(res: Response, subject: string) {
 }
 
 export async function tryRestoreSession(req: Request, res: Response, subject: string) {
+  if (!subject) {
+    return false;
+  }
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
   if (refreshToken) {
     try {
