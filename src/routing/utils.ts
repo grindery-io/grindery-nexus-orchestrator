@@ -1,6 +1,6 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { AsyncRouter } from "express-async-router";
-import { signJWT, encryptJWT } from "../jwt";
+import { signJWT, encryptJWT, decryptJWT } from "../jwt";
 import { AUD_REFRESH_TOKEN, AUD_ACCESS_TOKEN } from "./oauth";
 
 export function createAsyncRouter() {
@@ -32,4 +32,25 @@ export async function tokenResponse(res: Response, subject: string) {
     expires_in: 3600,
     refresh_token: refreshToken,
   });
+}
+
+export async function tryRestoreSession(req: Request, res: Response, subject: string) {
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+  if (refreshToken) {
+    try {
+      const result = await decryptJWT(refreshToken, {
+        audience: AUD_REFRESH_TOKEN,
+        subject,
+      });
+      res.json({
+        access_token: await signJWT({ aud: AUD_ACCESS_TOKEN, sub: result.payload.sub }, "3600s"),
+        token_type: "bearer",
+        expires_in: 3600,
+      });
+      return true;
+    } catch (e) {
+      // Ignore
+    }
+  }
+  return false;
 }

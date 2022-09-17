@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { AppUtils, config } from "@onflow/fcl";
 import { decryptJWT, encryptJWT } from "../jwt";
-import { createAsyncRouter, tokenResponse } from "./utils";
+import { createAsyncRouter, tokenResponse, tryRestoreSession } from "./utils";
 import { AUD_LOGIN_CHALLENGE } from "./oauth";
 
 const router = createAsyncRouter();
@@ -37,7 +37,15 @@ export async function grantByFlow(
   return await tokenResponse(res, "flow:mainnet:" + address.toLowerCase());
 }
 
-router.get("/flow-get-nonce", async (_, res) => {
+router.get("/session", async (req, res) => {
+  const address = String(req.query.address || "");
+  if (address && !/^0x[0-9a-f]+$/i.test(address)) {
+    return res.status(400).json({ error: "invalid_flow_address" });
+  }
+  const subject = "flow:mainnet:" + address;
+  if (await tryRestoreSession(req, res, subject)) {
+    return;
+  }
   const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: FLOW_AUTH_SUB }, "300s");
   return res.json({
     app_identifier: FLOW_APP_ID,

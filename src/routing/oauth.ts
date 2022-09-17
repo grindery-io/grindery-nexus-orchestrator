@@ -3,7 +3,7 @@ import * as jose from "jose";
 import * as ethLib from "eth-lib";
 import base64url from "base64url";
 import { decryptJWT, signJWT, encryptJWT, getPublicJwk } from "../jwt";
-import { createAsyncRouter } from "./utils";
+import { createAsyncRouter, tryRestoreSession } from "./utils";
 import { tokenResponse, REFRESH_TOKEN_COOKIE } from "./utils";
 import { Router as FlowRouter, grantByFlow } from "./flow";
 
@@ -136,22 +136,11 @@ router.get("/session", async (req, res) => {
   if (!/^0x[0-9a-f]{40}$/i.test(address)) {
     return res.status(400).json({ error: "invalid_eth_address" });
   }
-  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
-  if (refreshToken) {
-    try {
-      const result = await decryptJWT(refreshToken, {
-        audience: AUD_REFRESH_TOKEN,
-      });
-      return res.json({
-        access_token: await signJWT({ aud: AUD_ACCESS_TOKEN, sub: result.payload.sub }, "3600s"),
-        token_type: "bearer",
-        expires_in: 3600,
-      });
-    } catch (e) {
-      // Ignore
-    }
+  const subject = "eip155:1:" + address;
+  if (await tryRestoreSession(req, res, subject)) {
+    return;
   }
-  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: "eip155:1:" + address }, "300s");
+  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: subject }, "300s");
   return res.json({
     message: `Signing in on Grindery: ${token}`,
     expires_in: 300,
@@ -180,5 +169,5 @@ router.get("/jwks", async (_, res) => {
   });
 });
 
-router.use(FlowRouter);
+router.use("/flow", FlowRouter);
 export default router;
