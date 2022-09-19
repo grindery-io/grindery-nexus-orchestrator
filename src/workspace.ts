@@ -66,7 +66,18 @@ async function updateWorkspaceInternal(
   if (result.matchedCount === 0) {
     await throwNotFoundOrPermissionError(key);
   }
-  return { key };
+  return {
+    key,
+    token: await signJWT(
+      {
+        aud: AUD_ACCESS_TOKEN,
+        sub: userAccountId,
+        workspace: key,
+        role: "admin",
+      },
+      "3600s"
+    ),
+  };
 }
 export async function updateWorkspace(
   {
