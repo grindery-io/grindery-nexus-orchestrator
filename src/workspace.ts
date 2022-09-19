@@ -44,7 +44,18 @@ export async function createWorkspace(
     updatedAt: Date.now(),
   });
   track(userAccountId, "Create Workspace", { workspace: key, title });
-  return { key };
+  return {
+    key,
+    token: await signJWT(
+      {
+        aud: AUD_ACCESS_TOKEN,
+        sub: userAccountId,
+        workspace: key,
+        role: "admin",
+      },
+      "3600s"
+    ),
+  };
 }
 
 export async function throwNotFoundOrPermissionError(key: string) {
@@ -66,18 +77,7 @@ async function updateWorkspaceInternal(
   if (result.matchedCount === 0) {
     await throwNotFoundOrPermissionError(key);
   }
-  return {
-    key,
-    token: await signJWT(
-      {
-        aud: AUD_ACCESS_TOKEN,
-        sub: userAccountId,
-        workspace: key,
-        role: "admin",
-      },
-      "3600s"
-    ),
-  };
+  return { key };
 }
 export async function updateWorkspace(
   {
