@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from "uuid";
 
 import { DbSchema, getCollection } from "./db";
 import { Context } from "./jsonrpc";
+import { signJWT } from "./jwt";
+import { AUD_ACCESS_TOKEN } from "./routing/oauth";
 import { track } from "./tracking";
 
 export async function createWorkspace(
@@ -152,13 +154,28 @@ export async function leaveWorkspace({ key }: { key: string }, { context: { user
   return { left: true };
 }
 
-export async function listWorkspaces(_, { context: { user } }: { context: Context }) {
+export async function listWorkspaces(
+  _,
+  { context: { user } }: { context: Context }
+): Promise<(DbSchema["workspaces"] & { token: string })[]> {
   const userAccountId = user?.sub || "";
   const collection = await getCollection("workspaces");
   const result = collection.find({
     $or: [{ admins: { $in: [userAccountId] } }, { users: { $in: [userAccountId] } }],
   });
-  return await result.toArray();
+  const items = (await result.toArray()).map((x) => ({ ...x, token: "" }));
+  for (const item of items) {
+    item.token = await signJWT(
+      {
+        aud: AUD_ACCESS_TOKEN,
+        sub: userAccountId,
+        workspace: item.key,
+        role: item.admins.includes(userAccountId) ? "admin" : "user",
+      },
+      "3600s"
+    );
+  }
+  return items;
 }
 
 export async function workspaceAddUser(
