@@ -64,7 +64,7 @@ const GRANT_MODES = {
   authorization_code: async (req: Request, res: Response) => {
     let decodedParams;
     try {
-      decodedParams = JSON.parse(base64url.decode(String(req.query?.code) || ""));
+      decodedParams = JSON.parse(base64url.decode(String(req.body?.code || "")));
     } catch (e) {
       return res.status(400).json({ error: "invalid_request", error_description: "Invalid code" });
     }
