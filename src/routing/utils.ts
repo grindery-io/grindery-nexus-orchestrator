@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { AsyncRouter } from "express-async-router";
-import { signJWT, encryptJWT, decryptJWT } from "../jwt";
+import { JWTPayload } from "jose";
+import { signJWT, encryptJWT, decryptJWT, verifyJWT } from "../jwt";
 import { AUD_REFRESH_TOKEN, AUD_ACCESS_TOKEN } from "./oauth";
 
 export function createAsyncRouter() {
@@ -56,4 +57,25 @@ export async function tryRestoreSession(req: Request, res: Response, subject: st
     }
   }
   return false;
+}
+
+export async function auth(req: Request & { user?: JWTPayload }, res: Response, next: NextFunction) {
+  const m = /Bearer +(.+$)/i.exec(req.get("Authorization") || "");
+  let token = "";
+  if (m) {
+    token = m[1];
+  } else if (req.query?.access_token) {
+    token = String(req.query?.access_token);
+  }
+  if (token) {
+    try {
+      req.user = (await verifyJWT(token, { audience: AUD_ACCESS_TOKEN })).payload;
+    } catch (e) {
+      return res.status(403).json({ error: "Invalid access token" });
+    }
+  }
+  if (!req.user) {
+    return res.status(403).json({ error: "Authentication required" });
+  }
+  return next();
 }

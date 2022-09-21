@@ -18,7 +18,7 @@
     "@sentry/node": "^6.17.8",
     "@tradle/key-encoder": "^2.1.1",
     "analytics-node": "^6.2.0",
-    "axios": "^0.26.1",
+    "axios": "^0.27.2",
     "base64url": "^3.0.1",
     "console-log-json": "github:SAPikachu/console-log-json",
     "cookie-parser": "^1.4.6",
