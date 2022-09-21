@@ -30,7 +30,12 @@ export async function grantByFlow(
   } catch (e) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid or expired nonce" });
   }
-  const isValid = await AppUtils.verifyAccountProof(FLOW_APP_ID, { address, nonce, signatures });
+  let isValid = false;
+  try {
+    isValid = await AppUtils.verifyAccountProof(FLOW_APP_ID, { address, nonce, signatures });
+  } catch (e) {
+    // Fall below
+  }
   if (!isValid) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid account proof" });
   }
