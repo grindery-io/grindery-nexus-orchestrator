@@ -2,15 +2,30 @@ import { URL } from "node:url";
 import assert from "assert";
 import axios from "axios";
 import { Request } from "express";
-import { JWTPayload } from "jose";
 import { JSONRPCClient } from "json-rpc-2.0";
-import { decryptJWT, encryptJWT, signJWT, TAccessToken } from "../jwt";
+import { AccessToken, TAccessToken, typedCipher } from "../jwt";
 import { auth, createAsyncRouter } from "./utils";
+import { TypedJWTPayload } from "grindery-nexus-common-utils";
 
 const router = createAsyncRouter();
 
-const AUD_AUTH_STATE = "urn:grindery:auth-state";
-const AUD_CALLBACK_STATE = "urn:grindery:callback-state";
+type AuthStateExtra = {
+  redirectUri: string;
+  state: string;
+  environment: string;
+  connectorId: string;
+};
+type TAuthState = TypedJWTPayload<AuthStateExtra>;
+const AuthState = typedCipher<AuthStateExtra>("urn:grindery:auth-state");
+
+type CallbackStateExtra = {
+  code: string;
+  environment: string;
+  connectorId: string;
+};
+type TCallbackState = TypedJWTPayload<CallbackStateExtra>;
+const CallbackState = typedCipher<CallbackStateExtra>("urn:grindery:callback-state");
+
 const ALLOWED_REDIRECT_URI = [/^https?:\/\/localhost\b.*$/, /^https:\/\/[^.]+\.grindery\.(io|org)\/.*$/];
 
 const credentialManagerClient: JSONRPCClient = new JSONRPCClient((jsonRPCRequest) =>
@@ -56,12 +71,11 @@ router.get("/:environment/:connectorId/auth", auth, async (req: Request & { user
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid connector ID" });
   }
   const url = new URL(authorizeUrl);
-  const state = await encryptJWT(
+  const state = await AuthState.encrypt(
     {
-      aud: AUD_AUTH_STATE,
       sub: req.user.sub,
-      redirectUri: req.query.redirect_uri,
-      state: req.query.state,
+      redirectUri: String(req.query.redirect_uri),
+      state: String(req.query.state),
       environment,
       connectorId,
     },
@@ -75,9 +89,9 @@ router.get("/auth/callback", async (req, res) => {
   if (!req.query?.state) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing state" });
   }
-  let decryptedState: JWTPayload;
+  let decryptedState: TAuthState;
   try {
-    decryptedState = (await decryptJWT(String(req.query.state), { audience: AUD_AUTH_STATE })).payload;
+    decryptedState = await AuthState.decrypt(String(req.query.state));
   } catch (e) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid state" });
   }
@@ -88,13 +102,12 @@ router.get("/auth/callback", async (req, res) => {
   if (req.query.error) {
     url.searchParams.set("error", String(req.query.error));
   } else {
-    const code = await encryptJWT(
+    const code = await CallbackState.encrypt(
       {
-        aud: AUD_CALLBACK_STATE,
         sub: decryptedState.sub,
         environment: decryptedState.environment,
         connectorId: decryptedState.connectorId,
-        code: req.query.code,
+        code: String(req.query.code),
       },
       "300s"
     );
@@ -107,10 +120,9 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
   if (!req.body?.code) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing code" });
   }
-  let decryptedState: JWTPayload;
+  let decryptedState: TCallbackState;
   try {
-    decryptedState = (await decryptJWT(String(req.body?.code), { audience: AUD_CALLBACK_STATE, subject: req.user.sub }))
-      .payload;
+    decryptedState = await CallbackState.decrypt(String(req.body?.code), { subject: req.user.sub });
   } catch (e) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid code" });
   }
@@ -123,7 +135,7 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
       displayName: req.body.displayName || new Date().toISOString(),
       params: { code, redirect_uri: getRedirectUri(req) },
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      accessToken: await signJWT(req.user!, "60s"),
+      accessToken: await AccessToken.sign(req.user!, "60s"),
     });
   } catch (e) {
     console.error("Failed to complete authentication flow:", e);

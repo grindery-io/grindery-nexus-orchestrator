@@ -8,8 +8,8 @@ jwtTools.getPublicJwk().catch((e) => {
   process.exit(1);
 });
 
-const { encryptJWT, decryptJWT, signJWT, verifyJWT, getPublicJwk } = jwtTools;
-export { encryptJWT, decryptJWT, signJWT, verifyJWT, getPublicJwk };
+const { encryptJWT, decryptJWT, signJWT, verifyJWT, getPublicJwk, typedCipher, typedToken } = jwtTools;
+export { encryptJWT, decryptJWT, signJWT, verifyJWT, getPublicJwk, typedCipher, typedToken };
 
 type AccessTokenExtra =
   | {
