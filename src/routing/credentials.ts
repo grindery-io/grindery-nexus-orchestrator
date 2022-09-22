@@ -11,6 +11,7 @@ const router = createAsyncRouter();
 
 const AUD_AUTH_STATE = "urn:grindery:auth-state";
 const AUD_CALLBACK_STATE = "urn:grindery:callback-state";
+const ALLOWED_REDIRECT_URI = [/^https?:\/\/localhost\b.*$/, /^https:\/\/[^.]+\.grindery\.(io|org)\/.*$/];
 
 const credentialManagerClient: JSONRPCClient = new JSONRPCClient((jsonRPCRequest) =>
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -35,12 +36,17 @@ const credentialManagerClient: JSONRPCClient = new JSONRPCClient((jsonRPCRequest
 const callCredentialManager = (method: string, params) => credentialManagerClient.timeout(5000).request(method, params);
 
 function getRedirectUri(req: Request): string {
-  return `${req.hostname.startsWith("localhost") ? "http" : "https"}://${req.get("Host")}${req.baseUrl}/auth/callback`;
+  return `${req.hostname.startsWith("localhost") ? "http" : "https"}://${process.env.HOST || req.get("Host")}${
+    req.baseUrl
+  }/auth/callback`;
 }
-router.get("/auth/init/:environment/:connectorId", auth, async (req: Request & { user?: JWTPayload }, res) => {
+router.get("/:environment/:connectorId/auth", auth, async (req: Request & { user?: JWTPayload }, res) => {
   assert(req.user);
   if (!req.query?.redirect_uri) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing redirect_uri" });
+  }
+  if (!ALLOWED_REDIRECT_URI.some((x) => x.test(String(req.query.redirect_uri)))) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Unauthorized redirect_uri" });
   }
   const { environment, connectorId } = req.params;
   let authorizeUrl: string;
