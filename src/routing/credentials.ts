@@ -1,11 +1,10 @@
 import { URL } from "node:url";
 import assert from "assert";
-import axios from "axios";
 import { Request } from "express";
-import { JSONRPCClient } from "json-rpc-2.0";
 import { AccessToken, TAccessToken, typedCipher } from "../jwt";
 import { auth, createAsyncRouter } from "./utils";
 import { TypedJWTPayload } from "grindery-nexus-common-utils";
+import { callCredentialManager } from "../credentialManagerClient";
 
 const router = createAsyncRouter();
 
@@ -27,28 +26,6 @@ type TCallbackState = TypedJWTPayload<CallbackStateExtra>;
 const CallbackState = typedCipher<CallbackStateExtra>("urn:grindery:callback-state");
 
 const ALLOWED_REDIRECT_URI = [/^https?:\/\/localhost\b.*$/, /^https:\/\/[^.]+\.grindery\.(io|org)\/.*$/];
-
-const credentialManagerClient: JSONRPCClient = new JSONRPCClient((jsonRPCRequest) =>
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  axios.post(process.env.CREDENTIAL_MANAGER_URI!, jsonRPCRequest).then(
-    (response) => credentialManagerClient.receive(response.data),
-    (e) => {
-      if (e.response?.data?.id === jsonRPCRequest.id) {
-        credentialManagerClient.receive(e.response.data);
-        return;
-      }
-      console.error("Unexpected error from JSON-RPC request: ", e, { jsonRPCRequest });
-      if (jsonRPCRequest.id) {
-        credentialManagerClient.receive({
-          jsonrpc: jsonRPCRequest.jsonrpc,
-          id: jsonRPCRequest.id,
-          error: e.toString(),
-        });
-      }
-    }
-  )
-);
-const callCredentialManager = (method: string, params) => credentialManagerClient.timeout(5000).request(method, params);
 
 function getRedirectUri(req: Request): string {
   return `${req.hostname.startsWith("localhost") ? "http" : "https"}://${process.env.HOST || req.get("Host")}${
@@ -129,14 +106,17 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
   const { connectorId, environment, code } = decryptedState;
   let result;
   try {
-    result = await callCredentialManager("completeConnectorAuthorization", {
-      connectorId,
-      environment,
-      displayName: req.body.displayName || new Date().toISOString(),
-      params: { code, redirect_uri: getRedirectUri(req) },
+    result = await callCredentialManager(
+      "completeConnectorAuthorization",
+      {
+        connectorId,
+        environment,
+        displayName: req.body.displayName || new Date().toISOString(),
+        params: { code, redirect_uri: getRedirectUri(req) },
+      },
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      accessToken: await AccessToken.sign(req.user!, "60s"),
-    });
+      await AccessToken.sign(req.user!, "60s")
+    );
   } catch (e) {
     console.error("Failed to complete authentication flow:", e);
     return res

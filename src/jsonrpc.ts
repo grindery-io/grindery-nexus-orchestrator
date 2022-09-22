@@ -16,7 +16,7 @@ import {
   requestEarlyAccess,
   saveWalletAddress,
   moveWorkflowToWorkspace,
-} from "./orchestrator";
+} from "./rpc/orchestrator";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
 import assert from "assert";
@@ -30,7 +30,8 @@ import {
   workspaceAddUser,
   workspaceRemoveAdmin,
   workspaceRemoveUser,
-} from "./workspace";
+} from "./rpc/workspace";
+import { listAuthCredentials, updateAuthCredentials, deleteAuthCredentials } from "./rpc/credentials";
 
 export type Context = {
   user?: TAccessToken;
@@ -97,6 +98,10 @@ export function createServer() {
     workspaceRemoveUser,
     workspaceAddAdmin,
     workspaceRemoveAdmin,
+
+    listAuthCredentials,
+    updateAuthCredentials,
+    deleteAuthCredentials,
   };
   for (const [name, func] of Object.entries(methods) as [
     string,

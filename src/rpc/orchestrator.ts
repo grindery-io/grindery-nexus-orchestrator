@@ -2,14 +2,14 @@ import { v4 as uuidv4 } from "uuid";
 import * as Sentry from "@sentry/node";
 import { Client as HubSpotClient } from "@hubspot/api-client";
 
-import { DbSchema, getCollection } from "./db";
+import { DbSchema, getCollection } from "../db";
 import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
-import { runSingleAction, RuntimeWorkflow } from "./runtimeWorkflow";
+import { runSingleAction, RuntimeWorkflow } from "../runtimeWorkflow";
 import axios from "axios";
-import { identify, track } from "./tracking";
-import { getWorkflowEnvironment } from "./utils";
+import { identify, track } from "../tracking";
+import { getWorkflowEnvironment } from "../utils";
 import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
-import { Context } from "./jsonrpc";
+import { Context } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
 
 function verifyAccountId(accountId: string) {

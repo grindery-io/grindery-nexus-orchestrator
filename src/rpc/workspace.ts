@@ -2,10 +2,10 @@ import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { UpdateFilter } from "mongodb";
 import { v4 as uuidv4 } from "uuid";
 
-import { DbSchema, getCollection } from "./db";
-import { Context } from "./jsonrpc";
-import { AccessToken } from "./jwt";
-import { track } from "./tracking";
+import { DbSchema, getCollection } from "../db";
+import { Context } from "../jsonrpc";
+import { AccessToken } from "../jwt";
+import { track } from "../tracking";
 
 export async function createWorkspace(
   {
