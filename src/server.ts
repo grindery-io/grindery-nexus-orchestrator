@@ -15,8 +15,19 @@ if (process.env.LOG_JSON) {
 runJsonRpcServer(createServer(), {
   middlewares: [
     cors({ origin: true, credentials: true, maxAge: 86400 }),
-    express.json(),
-    express.urlencoded({ extended: true }),
+    express.json({
+      verify(req, res, buf) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (req as any).rawBody = buf;
+      },
+    }),
+    express.urlencoded({
+      extended: true,
+      verify(req, res, buf) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (req as any).rawBody = buf;
+      },
+    }),
     cookieParser(),
   ],
   mutateRoutes: (app) => {

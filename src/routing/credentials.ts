@@ -126,4 +126,46 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
   return res.json(result);
 });
 
+router.all("/:environment/:connectorId/request/:domain*", async (req: Request & { rawBody?: Buffer | string }, res) => {
+  const authHeader = req.get("Authorization");
+  if (!authHeader) {
+    return res.status(403).json({ error: "missing_authorization_header" });
+  }
+  const m = /Bearer (.*)$/.exec(authHeader);
+  if (!m) {
+    return res.status(403).json({ error: "invalid_authorization_header" });
+  }
+  const request = {
+    method: req.method,
+    url: `https://${req.params["domain"]}/${req.params["0"] || ""}`,
+    params: req.query,
+    headers: {},
+    body: undefined as undefined | string,
+  };
+  if (req.rawBody) {
+    request.body = typeof req.rawBody === "string" ? req.rawBody : req.rawBody.toString("utf-8");
+    if (req.get("Content-Type")) {
+      request.headers["Content-Type"] = String(req.get("Content-Type"));
+    }
+  }
+  const { environment, connectorId } = req.params;
+  const result = await callCredentialManager("makeRequest", {
+    connectorId,
+    environment,
+    request,
+    credentialToken: m[1],
+  });
+  if (result.status) {
+    res.status(result.status);
+  }
+  if (result.headers?.["content-type"]) {
+    res.contentType(result.headers?.["content-type"]);
+  }
+  if (typeof result.data === "string") {
+    res.send(result.data);
+  } else {
+    res.json(result.data);
+  }
+});
+
 export default router;
