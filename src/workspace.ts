@@ -53,7 +53,7 @@ export async function createWorkspace(
         workspace: key,
         role: "admin",
       },
-      "3600s"
+      user?.exp || "1h"
     ),
   };
 }
@@ -183,7 +183,7 @@ export async function listWorkspaces(
         workspace: item.key,
         role: item.admins.includes(userAccountId) ? "admin" : "user",
       },
-      "3600s"
+      user?.exp || "1h"
     );
   }
   return items;
