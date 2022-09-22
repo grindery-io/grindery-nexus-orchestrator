@@ -1,8 +1,7 @@
 import { Response } from "express";
 import { AppUtils, config } from "@onflow/fcl";
-import { decryptJWT, encryptJWT } from "../jwt";
+import { LoginChallenge } from "../jwt";
 import { createAsyncRouter, tokenResponse, tryRestoreSession } from "./utils";
-import { AUD_LOGIN_CHALLENGE } from "./oauth";
 
 const router = createAsyncRouter();
 
@@ -23,8 +22,7 @@ export async function grantByFlow(
     return res.status(400).json({ error: "invalid_request", error_description: "Missing signatures" });
   }
   try {
-    await decryptJWT(Buffer.from(nonce, "hex").toString(), {
-      audience: AUD_LOGIN_CHALLENGE,
+    await LoginChallenge.decrypt(Buffer.from(nonce, "hex").toString(), {
       subject: FLOW_AUTH_SUB,
     });
   } catch (e) {
@@ -51,7 +49,7 @@ router.get("/session", async (req, res) => {
   if (await tryRestoreSession(req, res, subject)) {
     return;
   }
-  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: FLOW_AUTH_SUB }, "300s");
+  const token = await LoginChallenge.encrypt({ sub: FLOW_AUTH_SUB }, "300s");
   return res.json({
     app_identifier: FLOW_APP_ID,
     nonce: Buffer.from(token).toString("hex"),

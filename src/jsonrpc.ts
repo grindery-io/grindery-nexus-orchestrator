@@ -18,14 +18,22 @@ import {
   moveWorkflowToWorkspace,
 } from "./orchestrator";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
-import { verifyJWT } from "./jwt";
-import { AUD_ACCESS_TOKEN } from "./routing/oauth";
+import { AccessToken, TAccessToken } from "./jwt";
 import assert from "assert";
-import { JWTPayload } from "jose";
-import { createWorkspace, deleteWorkspace, leaveWorkspace, listWorkspaces, updateWorkspace, workspaceAddAdmin, workspaceAddUser, workspaceRemoveAdmin, workspaceRemoveUser } from "./workspace";
+import {
+  createWorkspace,
+  deleteWorkspace,
+  leaveWorkspace,
+  listWorkspaces,
+  updateWorkspace,
+  workspaceAddAdmin,
+  workspaceAddUser,
+  workspaceRemoveAdmin,
+  workspaceRemoveUser,
+} from "./workspace";
 
 export type Context = {
-  user?: JWTPayload;
+  user?: TAccessToken;
 };
 
 const authMiddleware = async (
@@ -46,7 +54,7 @@ const authMiddleware = async (
   if (token) {
     assert(serverParams?.context);
     try {
-      serverParams.context.user = (await verifyJWT(token, { audience: AUD_ACCESS_TOKEN })).payload;
+      serverParams.context.user = await AccessToken.verify(token);
     } catch (e) {
       return createJSONRPCErrorResponse(request.id || "", JSONRPCErrorCode.InvalidParams, "Invalid access token");
     }

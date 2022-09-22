@@ -2,16 +2,12 @@ import { Request, Response } from "express";
 import * as jose from "jose";
 import * as ethLib from "eth-lib";
 import base64url from "base64url";
-import { decryptJWT, signJWT, encryptJWT, getPublicJwk } from "../jwt";
+import { getPublicJwk, RefreshToken, AccessToken, LoginChallenge } from "../jwt";
 import { createAsyncRouter, tryRestoreSession } from "./utils";
 import { tokenResponse, REFRESH_TOKEN_COOKIE } from "./utils";
 import { Router as FlowRouter, grantByFlow } from "./flow";
 
 const router = createAsyncRouter();
-
-export const AUD_REFRESH_TOKEN = "urn:grindery:refresh-token:v1";
-export const AUD_ACCESS_TOKEN = "urn:grindery:access-token:v1";
-export const AUD_LOGIN_CHALLENGE = "urn:grindery:login-challenge";
 
 const grantByEthSignature = async (res: Response, message: string, signature: string) => {
   if (!message) {
@@ -27,11 +23,9 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   if (!m) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid message" });
   }
-  let decryptResult: jose.JWTDecryptResult;
+  let decryptResult: jose.JWTPayload;
   try {
-    decryptResult = await decryptJWT(m[1], {
-      audience: AUD_LOGIN_CHALLENGE,
-    });
+    decryptResult = await LoginChallenge.decrypt(m[1]);
   } catch (e) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid or expired message" });
   }
@@ -43,7 +37,7 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   const messageHash = ethLib.Hash.keccak256(Buffer.concat([preamble, messageBuffer]));
   try {
     const recoveredAddress = ethLib.Account.recover(messageHash, signature);
-    if ("eip155:1:" + recoveredAddress.toLowerCase() !== decryptResult.payload.sub?.toLowerCase()) {
+    if ("eip155:1:" + recoveredAddress.toLowerCase() !== decryptResult.sub?.toLowerCase()) {
       return res
         .status(400)
         .json({ error: "invalid_request", error_description: "Signature is not from correct wallet" });
@@ -51,7 +45,7 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   } catch (e) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid signature" });
   }
-  const subject = decryptResult.payload.sub;
+  const subject = decryptResult.sub;
   return await tokenResponse(res, subject);
 };
 
@@ -81,11 +75,9 @@ const GRANT_MODES = {
       return res.status(400).json({ error: "invalid_request" });
     }
     try {
-      const result = await decryptJWT(token, {
-        audience: AUD_REFRESH_TOKEN,
-      });
+      const result = await RefreshToken.decrypt(token);
       return res.json({
-        access_token: await signJWT({ aud: AUD_ACCESS_TOKEN, sub: result.payload.sub }, "3600s"),
+        access_token: await AccessToken.sign({ sub: result.sub }, "3600s"),
         token_type: "bearer",
         expires_in: 3600,
       });
@@ -125,7 +117,7 @@ router.get("/eth-get-message", async (req, res) => {
   if (!/^0x[0-9a-f]{40}$/i.test(address)) {
     return res.status(400).json({ error: "invalid_eth_address" });
   }
-  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: "eip155:1:" + address }, "300s");
+  const token = await LoginChallenge.encrypt({ sub: "eip155:1:" + address }, "300s");
   return res.json({
     message: `Signing in on Grindery: ${token}`,
     expires_in: 300,
@@ -140,7 +132,7 @@ router.get("/session", async (req, res) => {
   if (await tryRestoreSession(req, res, subject)) {
     return;
   }
-  const token = await encryptJWT({ aud: AUD_LOGIN_CHALLENGE, sub: subject }, "300s");
+  const token = await LoginChallenge.encrypt({ sub: subject }, "300s");
   return res.json({
     message: `Signing in on Grindery: ${token}`,
     expires_in: 300,

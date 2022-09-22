@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AsyncRouter } from "express-async-router";
-import { JWTPayload } from "jose";
-import { signJWT, encryptJWT, decryptJWT, verifyJWT } from "../jwt";
-import { AUD_REFRESH_TOKEN, AUD_ACCESS_TOKEN } from "./oauth";
+import { AccessToken, RefreshToken, TAccessToken } from "../jwt";
 
 export function createAsyncRouter() {
   return AsyncRouter({
@@ -20,7 +18,7 @@ export function createAsyncRouter() {
 
 export const REFRESH_TOKEN_COOKIE = "grinderyNexusRefreshToken";
 export async function tokenResponse(res: Response, subject: string) {
-  const refreshToken = await encryptJWT({ aud: AUD_REFRESH_TOKEN, sub: subject }, "1000y");
+  const refreshToken = await RefreshToken.encrypt({ sub: subject }, "1000y");
   res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 365,
@@ -28,7 +26,7 @@ export async function tokenResponse(res: Response, subject: string) {
     secure: true,
   });
   return res.json({
-    access_token: await signJWT({ aud: AUD_ACCESS_TOKEN, sub: subject }, "3600s"),
+    access_token: await AccessToken.sign({ sub: subject }, "3600s"),
     token_type: "bearer",
     expires_in: 3600,
     refresh_token: refreshToken,
@@ -42,12 +40,11 @@ export async function tryRestoreSession(req: Request, res: Response, subject: st
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
   if (refreshToken) {
     try {
-      const result = await decryptJWT(refreshToken, {
-        audience: AUD_REFRESH_TOKEN,
+      const result = await RefreshToken.decrypt(refreshToken, {
         subject,
       });
       res.json({
-        access_token: await signJWT({ aud: AUD_ACCESS_TOKEN, sub: result.payload.sub }, "3600s"),
+        access_token: await AccessToken.sign({ sub: result.sub }, "3600s"),
         token_type: "bearer",
         expires_in: 3600,
       });
@@ -59,7 +56,7 @@ export async function tryRestoreSession(req: Request, res: Response, subject: st
   return false;
 }
 
-export async function auth(req: Request & { user?: JWTPayload }, res: Response, next: NextFunction) {
+export async function auth(req: Request & { user?: TAccessToken }, res: Response, next: NextFunction) {
   const m = /Bearer +(.+$)/i.exec(req.get("Authorization") || "");
   let token = "";
   if (m) {
@@ -69,7 +66,7 @@ export async function auth(req: Request & { user?: JWTPayload }, res: Response, 
   }
   if (token) {
     try {
-      req.user = (await verifyJWT(token, { audience: AUD_ACCESS_TOKEN })).payload;
+      req.user = await AccessToken.verify(token);
     } catch (e) {
       return res.status(403).json({ error: "Invalid access token" });
     }

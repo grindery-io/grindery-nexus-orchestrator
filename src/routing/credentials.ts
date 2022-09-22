@@ -4,7 +4,7 @@ import axios from "axios";
 import { Request } from "express";
 import { JWTPayload } from "jose";
 import { JSONRPCClient } from "json-rpc-2.0";
-import { decryptJWT, encryptJWT, signJWT } from "../jwt";
+import { decryptJWT, encryptJWT, signJWT, TAccessToken } from "../jwt";
 import { auth, createAsyncRouter } from "./utils";
 
 const router = createAsyncRouter();
@@ -40,7 +40,7 @@ function getRedirectUri(req: Request): string {
     req.baseUrl
   }/auth/callback`;
 }
-router.get("/:environment/:connectorId/auth", auth, async (req: Request & { user?: JWTPayload }, res) => {
+router.get("/:environment/:connectorId/auth", auth, async (req: Request & { user?: TAccessToken }, res) => {
   assert(req.user);
   if (!req.query?.redirect_uri) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing redirect_uri" });
@@ -102,7 +102,7 @@ router.get("/auth/callback", async (req, res) => {
   }
   return res.redirect(url.toString());
 });
-router.post("/auth/complete", auth, async (req: Request & { user?: JWTPayload }, res) => {
+router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken }, res) => {
   assert(req.user);
   if (!req.body?.code) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing code" });
@@ -126,6 +126,7 @@ router.post("/auth/complete", auth, async (req: Request & { user?: JWTPayload },
       accessToken: await signJWT(req.user!, "60s"),
     });
   } catch (e) {
+    console.error("Failed to complete authentication flow:", e);
     return res
       .status(400)
       .json({ error: "invalid_request", error_description: "Failed to complete authentication flow" });

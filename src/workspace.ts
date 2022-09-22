@@ -4,8 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { DbSchema, getCollection } from "./db";
 import { Context } from "./jsonrpc";
-import { signJWT } from "./jwt";
-import { AUD_ACCESS_TOKEN } from "./routing/oauth";
+import { AccessToken } from "./jwt";
 import { track } from "./tracking";
 
 export async function createWorkspace(
@@ -46,10 +45,8 @@ export async function createWorkspace(
   track(userAccountId, "Create Workspace", { workspace: key, title });
   return {
     key,
-    token: await signJWT(
+    token: await AccessToken.sign(
       {
-        aud: AUD_ACCESS_TOKEN,
-        sub: userAccountId,
         workspace: key,
         role: "admin",
       },
@@ -176,10 +173,8 @@ export async function listWorkspaces(
   });
   const items = (await result.toArray()).map((x) => ({ ...x, token: "" }));
   for (const item of items) {
-    item.token = await signJWT(
+    item.token = await AccessToken.sign(
       {
-        aud: AUD_ACCESS_TOKEN,
-        sub: userAccountId,
         workspace: item.key,
         role: item.admins.includes(userAccountId) ? "admin" : "user",
       },
