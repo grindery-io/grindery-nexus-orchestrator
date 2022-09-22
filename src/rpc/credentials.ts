@@ -74,13 +74,17 @@ export async function putConnectorSecrets(
   },
   { context: { user } }: { context: Context }
 ) {
-  assert(user);
   if (!user || !("workspace" in user) || user.workspace !== "ADMIN") {
     throw new Error("Only admin can update connector secret");
   }
-  return await callCredentialManager("putConnectorSecrets", {
-    connectorId,
-    secrets,
-    environment,
-  });
+  return await callCredentialManager(
+    "putConnectorSecrets",
+    {
+      connectorId,
+      secrets,
+      environment,
+    },
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await AccessToken.sign(user!, "60s")
+  );
 }
