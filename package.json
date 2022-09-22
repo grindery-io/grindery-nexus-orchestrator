@@ -29,7 +29,7 @@
     "eth-lib": "^0.1.29",
     "express": "^4.17.3",
     "express-async-router": "^0.1.15",
-    "grindery-nexus-common-utils": "^1.0.25",
+    "grindery-nexus-common-utils": "^1.0.29",
     "jose": "^4.9.0",
     "json-rpc-2.0": "^1.1.0",
     "lodash": "^4.17.21",
