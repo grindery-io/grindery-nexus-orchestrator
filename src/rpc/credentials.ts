@@ -61,3 +61,26 @@ export async function deleteAuthCredentials(
     await AccessToken.sign(user!, "60s")
   );
 }
+
+export async function putConnectorSecrets(
+  {
+    connectorId,
+    secrets,
+    environment,
+  }: {
+    connectorId: string;
+    secrets: { [key: string]: unknown };
+    environment: string;
+  },
+  { context: { user } }: { context: Context }
+) {
+  assert(user);
+  if (!user || !("workspace" in user) || user.workspace !== "ADMIN") {
+    throw new Error("Only admin can update connector secret");
+  }
+  return await callCredentialManager("putConnectorSecrets", {
+    connectorId,
+    secrets,
+    environment,
+  });
+}
