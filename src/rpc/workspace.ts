@@ -47,6 +47,7 @@ export async function createWorkspace(
     key,
     token: await AccessToken.sign(
       {
+        sub: user?.sub,
         workspace: key,
         role: "admin",
       },
@@ -175,6 +176,7 @@ export async function listWorkspaces(
   for (const item of items) {
     item.token = await AccessToken.sign(
       {
+        sub: user?.sub,
         workspace: item.key,
         role: item.admins.includes(userAccountId) ? "admin" : "user",
       },
