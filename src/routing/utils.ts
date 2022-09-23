@@ -68,11 +68,11 @@ export async function auth(req: Request & { user?: TAccessToken }, res: Response
     try {
       req.user = await AccessToken.verify(token);
     } catch (e) {
-      return res.status(403).json({ error: "Invalid access token" });
+      return res.status(401).json({ error: "Invalid access token" });
     }
   }
   if (!req.user) {
-    return res.status(403).json({ error: "Authentication required" });
+    return res.status(401).json({ error: "Authentication required" });
   }
   return next();
 }

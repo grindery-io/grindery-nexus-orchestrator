@@ -129,11 +129,11 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
 router.all("/:environment/:connectorId/request/:domain*", async (req: Request & { rawBody?: Buffer | string }, res) => {
   const authHeader = req.get("Authorization");
   if (!authHeader) {
-    return res.status(403).json({ error: "missing_authorization_header" });
+    return res.status(401).json({ error: "missing_authorization_header" });
   }
   const m = /Bearer (.*)$/.exec(authHeader);
   if (!m) {
-    return res.status(403).json({ error: "invalid_authorization_header" });
+    return res.status(401).json({ error: "invalid_authorization_header" });
   }
   const request = {
     method: req.method,
