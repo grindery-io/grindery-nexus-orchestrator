@@ -111,7 +111,7 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
       {
         connectorId,
         environment,
-        displayName: req.body.displayName || new Date().toISOString(),
+        displayName: req.body.displayName,
         params: { code, redirect_uri: getRedirectUri(req) },
       },
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
