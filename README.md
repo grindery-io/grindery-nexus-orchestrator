@@ -2,7 +2,7 @@
 
 ## Development
 
-Run `npm run server` to start locally. All JSON-RPC methods are callable from the HTTP endpoint. Almost all of the methods require authentication, please go to https://nexus.grindery.org/ and sign in, then get your token from dev tools.
+Run `npm run server` to start locally. All JSON-RPC methods are callable via the HTTP endpoint. Almost all of the methods require authentication, please go to https://nexus.grindery.org/ and sign in, then get your token from dev tools.
 
 ## Deployment
 
