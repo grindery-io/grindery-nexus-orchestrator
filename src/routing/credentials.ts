@@ -126,7 +126,7 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
   return res.json(result);
 });
 
-router.all("/:environment/:connectorId/request/:domain*", async (req: Request & { rawBody?: Buffer | string }, res) => {
+router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: Buffer | string }, res) => {
   const authHeader = req.get("Authorization");
   if (!authHeader) {
     return res.status(401).json({ error: "missing_authorization_header" });
@@ -148,10 +148,9 @@ router.all("/:environment/:connectorId/request/:domain*", async (req: Request & 
       request.headers["Content-Type"] = String(req.get("Content-Type"));
     }
   }
-  const { environment, connectorId } = req.params;
+  const { connectorId } = req.params;
   const result = await callCredentialManager("makeRequest", {
     connectorId,
-    environment,
     request,
     credentialToken: m[1],
   });
