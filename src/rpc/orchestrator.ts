@@ -102,7 +102,9 @@ export async function createWorkflow(
   track(userAccountId, "Create Workflow", {
     workflow: key,
     workspace: workspaceKey,
+    role: user && "role" in user ? user.role : undefined,
     source: workflow.source || "unknown",
+    title: workflow.title,
   });
   return { key };
 }
@@ -150,7 +152,9 @@ export async function updateWorkflow(
   track(userAccountId, "Update Workflow", {
     workflow: key,
     workspace: existingWorkflow.workspaceKey,
+    role: user && "role" in user ? user.role : undefined,
     source: workflow.source || "unknown",
+    title: workflow.title,
   });
   return { key };
 }
@@ -283,6 +287,7 @@ export async function deleteWorkflow({ key }: { key: string }, { context: { user
   track(userAccountId, "Delete Workflow", {
     workflow: key,
     workspace: workflow.workspaceKey,
+    role: user && "role" in user ? user.role : undefined,
     source: source || "unknown",
   });
   return { deleted: result.deletedCount === 1 };
