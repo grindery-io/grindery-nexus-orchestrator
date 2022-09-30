@@ -144,8 +144,14 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
   };
   if (req.rawBody) {
     request.body = typeof req.rawBody === "string" ? req.rawBody : req.rawBody.toString("utf-8");
-    if (req.get("Content-Type")) {
-      request.headers["Content-Type"] = String(req.get("Content-Type"));
+    if (req.get("content-type")) {
+      request.headers["content-type"] = String(req.get("content-type"));
+    }
+  }
+  for (const [key, value] of Object.entries(req.headers)) {
+    const m = /^x-grindery-request-(.+)$/.exec(key);
+    if (m) {
+      request.headers[m[1]] = value;
     }
   }
   const { connectorId } = req.params;
