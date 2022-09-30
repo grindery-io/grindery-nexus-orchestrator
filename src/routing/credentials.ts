@@ -149,7 +149,12 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
     }
   }
   for (const [key, value] of Object.entries(req.headers)) {
-    const m = /^x-grindery-request-(.+)$/.exec(key);
+    let m = /^x-grindery-request-base64-(.+)$/.exec(key);
+    if (m) {
+      request.headers[m[1]] = Buffer.from(value as string, "base64").toString();
+      continue;
+    }
+    m = /^x-grindery-request-(.+)$/.exec(key);
     if (m) {
       request.headers[m[1]] = value;
     }
