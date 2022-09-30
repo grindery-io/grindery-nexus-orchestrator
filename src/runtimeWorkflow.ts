@@ -113,6 +113,10 @@ export async function runSingleAction({
   if (!action) {
     throw new Error("Invalid action");
   }
+  if (!step.authentication) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    step.authentication = (step.credentials as any)?._grinderyCredentialToken || step.credentials?.access_token;
+  }
   return await runAction({
     action,
     input: input as { [key: string]: unknown },
