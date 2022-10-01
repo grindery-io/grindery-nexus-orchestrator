@@ -137,7 +137,7 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
   }
   const request = {
     method: req.method,
-    url: `https://${req.params["domain"]}/${req.params["0"] || ""}`,
+    url: `https://${req.params["domain"]}${req.params["0"] || ""}`,
     params: req.query,
     headers: {},
     body: undefined as undefined | string,
