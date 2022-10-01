@@ -84,6 +84,7 @@ async function runAction({
         sessionId,
         executionId,
         credentials: step.credentials,
+        authentication: step.authentication,
         fields: { ...input, dryRun },
       };
       debug("Sending runAction: ", requestBody);
@@ -341,6 +342,7 @@ export class RuntimeWorkflow {
           key: trigger.key,
           sessionId,
           credentials: this.workflow.trigger.credentials,
+          authentication: this.workflow.trigger.authentication,
           fields,
         };
         debug("Sending setupSignal: ", requestBody);
