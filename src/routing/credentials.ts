@@ -144,9 +144,10 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
   if (!m) {
     return res.status(401).json({ error: "invalid_authorization_header" });
   }
+  console.log("Request headers:", req.headers);
   const templateScope = req.get("x-grindery-template-scope") || "headers";
   if (!["all", "headers"].includes(templateScope)) {
-    return res.status(401).json({ error: "invalid_template_scope" });
+    return res.status(400).json({ error: "invalid_template_scope" });
   }
   const pathM = /^\/+[^/]+?\/+[^/]+?\/+[^/]+?\/+(.*)$/.exec(req.path);
   const request = {
