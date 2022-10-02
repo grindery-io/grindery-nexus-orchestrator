@@ -6,10 +6,7 @@ INSTANCE=${INSTANCE:-$npm_package_name}
 
 # Linting and type-checking
 eslint src/*.ts src/**/*.ts
-tsc -p tsconfig.json --noEmit
 
 # Build
 [ -d dist ] && rm -rf dist
-babel src --extensions ".ts,.js" -s inline -d dist
-cp package.json dist/
-cp package-lock.json dist/
+tsc -p tsconfig.json

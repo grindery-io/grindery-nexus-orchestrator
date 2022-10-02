@@ -4,8 +4,11 @@
   "exclude": ["node_modules", "**/*.spec.ts"],
   "compilerOptions": {
     "allowJs": true,
-    "outDir": "./build",
+    "outDir": "./dist",
     "noImplicitAny": false,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "useUnknownInCatchVariables": false
   }
 }
