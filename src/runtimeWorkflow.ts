@@ -114,10 +114,6 @@ export async function runSingleAction({
   if (!action) {
     throw new Error("Invalid action");
   }
-  if (!step.authentication) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    step.authentication = (step.credentials as any)?._grinderyCredentialToken || step.credentials?.access_token;
-  }
   return await runAction({
     action,
     input: input as { [key: string]: unknown },
@@ -139,15 +135,7 @@ export class RuntimeWorkflow {
     private workflow: WorkflowSchema,
     private accountId: string,
     private environment: string
-  ) {
-    // Temporary, use during migration period only
-    for (const op of ([workflow.trigger]).concat(workflow.actions || [])) {
-      if (!op.authentication) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        op.authentication = (op.credentials as any)?._grinderyCredentialToken || op.credentials?.access_token;
-      }
-    }
-  }
+  ) {}
   async start() {
     this.running = true;
     this.version++;
