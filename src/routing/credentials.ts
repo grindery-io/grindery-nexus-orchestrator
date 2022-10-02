@@ -3,7 +3,7 @@ import assert from "assert";
 import { Request } from "express";
 import { AccessToken, TAccessToken, typedCipher } from "../jwt";
 import { auth, createAsyncRouter } from "./utils";
-import { TypedJWTPayload } from "grindery-nexus-common-utils";
+import { getConnectorSchema, TypedJWTPayload } from "grindery-nexus-common-utils";
 import { callCredentialManager } from "../credentialManagerClient";
 
 const router = createAsyncRouter();
@@ -79,12 +79,21 @@ router.get("/auth/callback", async (req, res) => {
   if (req.query.error) {
     url.searchParams.set("error", String(req.query.error));
   } else {
+    const { environment, connectorId } = decryptedState;
+    const connector = await getConnectorSchema(connectorId, environment);
+    if (!connector) {
+      return res.status(500).json({ error: "server_error", error_description: "Connector is no longer available" });
+    }
     const code = await CallbackState.encrypt(
       {
         sub: decryptedState.sub,
-        environment: decryptedState.environment,
-        connectorId: decryptedState.connectorId,
-        code: String(req.query.code),
+        environment,
+        connectorId,
+        code: String(
+          req.query[
+            (connector.authentication?.type === "oauth2" && connector.authentication.oauth2Config.codeParam) || "code"
+          ]
+        ),
       },
       "300s"
     );
