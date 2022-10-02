@@ -144,9 +144,10 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
   if (!m) {
     return res.status(401).json({ error: "invalid_authorization_header" });
   }
+  const pathM = /^\/+[^/]+?\/+[^/]+?\/+[^/]+?\/+(.*)$/.exec(req.path);
   const request = {
     method: req.method,
-    url: `https://${req.params["domain"]}${req.params["0"] || ""}`,
+    url: `https://${req.params["domain"]}/${(pathM || [])[1] || ""}`,
     params: req.query,
     headers: {},
     body: undefined as undefined | string,
