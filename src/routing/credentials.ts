@@ -144,7 +144,19 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
   if (!m) {
     return res.status(401).json({ error: "invalid_authorization_header" });
   }
-  console.log("Request headers:", req.headers);
+  const credentialToken = m[1];
+  let user: TAccessToken | null = null;
+  if (req.get("x-grindery-user")) {
+    // User is optional, this is for debugging only
+    try {
+      user = await AccessToken.verify(String(req.get("x-grindery-user")));
+    } catch (e) {
+      // Fall below
+    }
+    if (!user) {
+      return res.status(401).json({ error: "invalid_user_token" });
+    }
+  }
   const templateScope = req.get("x-grindery-template-scope") || "headers";
   if (!["all", "headers"].includes(templateScope)) {
     return res.status(400).json({ error: "invalid_template_scope" });
@@ -152,7 +164,7 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
   const pathM = /^\/+[^/]+?\/+[^/]+?\/+[^/]+?\/+(.*)$/.exec(req.path);
   const request = {
     method: req.method,
-    url: `https://${req.params["domain"]}/${(pathM || [])[1] || ""}`,
+    url: `https://${req.params["domain"]}/${pathM?.[1] || ""}`,
     params: req.query,
     headers: {},
     body: undefined as undefined | string,
@@ -175,12 +187,17 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
     }
   }
   const { connectorId } = req.params;
-  const result = await callCredentialManager("makeRequest", {
-    connectorId,
-    request,
-    credentialToken: m[1],
-    templateScope,
-  });
+  const result = await callCredentialManager(
+    "makeRequest",
+    {
+      connectorId,
+      request,
+      credentialToken,
+      templateScope,
+      rejectProduction: !!req.get("x-forwarded-for") && !user,
+    },
+    user ? await AccessToken.sign(user, "60s") : undefined
+  );
   if (result.status) {
     res.status(result.status);
   }
