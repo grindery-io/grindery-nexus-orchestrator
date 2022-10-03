@@ -10,14 +10,13 @@
     "server": "[ -f server.js ] && node server || ts-node src/server",
     "server:dist": "cd dist && node server",
     "prepare": "husky install",
-    "test": "exit 0"
+    "test": "eslint src/**/*.ts && tsc -p tsconfig.json --noEmit"
   },
   "author": "",
   "license": "MIT",
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
-      "npx --yes prettier --write",
-      "npx --yes eslint"
+      "npx --yes prettier --write"
     ]
   },
   "dependencies": {
