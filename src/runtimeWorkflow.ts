@@ -236,7 +236,7 @@ export class RuntimeWorkflow {
           environment: this.environment,
         });
       } catch (e) {
-        track(this.accountId, "Workflow Step Error", { workflow: this.key, index });
+        track(this.accountId, "Workflow Step Error", { workflow: this.key, index, error: e.toString() });
         console.debug(`[${this.key}] Failed step ${index}: ${e.toString()}`);
         await logCollection.updateOne(
           {
