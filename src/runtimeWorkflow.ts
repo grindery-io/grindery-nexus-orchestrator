@@ -368,7 +368,7 @@ export class RuntimeWorkflow {
         if (triggerSocket === this.triggerSocket) {
           this.triggerSocket = null;
         }
-        triggerSocket.close();
+        triggerSocket.close(3001, String(e));
         setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
         return;
       }
