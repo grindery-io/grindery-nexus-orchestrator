@@ -292,7 +292,11 @@ export class RuntimeWorkflow {
       return;
     }
     this.startCount++;
-    await new Promise((resolve) => setTimeout(resolve, 100 * Math.pow(2, this.startCount) + Math.random() * 1000));
+    const wait = 100 * Math.pow(2, this.startCount) + Math.random() * 1000;
+    if (this.startCount > 1) {
+      console.log(`[${this.key}] Retrying after ${Math.floor(wait / 1000)}s`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, wait));
     if (!this.running || this.version !== currentVersion) {
       return;
     }
