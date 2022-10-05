@@ -129,6 +129,7 @@ export class RuntimeWorkflow {
   private triggerSocket: JsonRpcWebSocket | null = null;
   private startCount = 0;
   private version = 0;
+  private keepAliveRunning = false;
 
   constructor(
     private key: string,
@@ -149,21 +150,33 @@ export class RuntimeWorkflow {
     console.debug(`[${this.key}] Stopped`);
   }
   async keepAlive() {
+    if (this.keepAliveRunning) {
+      return;
+    }
     if (!this.running) {
       return;
     }
-    const currentVersion = this.version;
+    this.keepAliveRunning = true;
     try {
-      await this.triggerSocket?.request("ping");
-      setTimeout(() => {
-        if (this.version === currentVersion) {
-          this.keepAlive();
+      for (;;) {
+        if (!this.running) {
+          return;
         }
-      }, parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000);
+        if (!this.triggerSocket?.isOpen) {
+          console.warn(`[${this.key}] Not sending keep alive request because WebSocket is not open`);
+        } else {
+          await this.triggerSocket?.request("ping");
+        }
+        await new Promise((res) => setTimeout(res, parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000));
+      }
     } catch (e) {
       console.warn(`[${this.key}] Failed to keep alive: ${e.toString()}`);
-      this.triggerSocket?.close();
-      this.setupTrigger();
+      this.triggerSocket?.close(3002, "Failed to keep alive");
+    } finally {
+      this.keepAliveRunning = false;
+      if (this.running) {
+        this.keepAlive();
+      }
     }
   }
   async onNotifySignal(payload: ConnectorOutput | undefined) {
@@ -316,6 +329,17 @@ export class RuntimeWorkflow {
       }
       const sessionId = uuidv4();
       console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
+      const triggerSocket = new JsonRpcWebSocket(url);
+      triggerSocket.on("close", (code, reason) => {
+        console.log(`[${this.key}] WebSocket closed (${code} - ${reason})`);
+        if (triggerSocket !== this.triggerSocket) {
+          return;
+        }
+        if (!this.running) {
+          return;
+        }
+        setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
+      });
       if (this.triggerSocket) {
         try {
           this.triggerSocket.close();
@@ -323,7 +347,7 @@ export class RuntimeWorkflow {
           // Ignore
         }
       }
-      this.triggerSocket = new JsonRpcWebSocket(url);
+      this.triggerSocket = triggerSocket;
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
       try {
         const requestBody = {
@@ -337,6 +361,10 @@ export class RuntimeWorkflow {
         await this.triggerSocket.request<ConnectorInput>("setupSignal", requestBody);
       } catch (e) {
         console.error(`[${this.key}] Failed to setup signal:`, e);
+        if (triggerSocket === this.triggerSocket) {
+          this.triggerSocket = null;
+        }
+        triggerSocket.close();
         setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
         return;
       }
