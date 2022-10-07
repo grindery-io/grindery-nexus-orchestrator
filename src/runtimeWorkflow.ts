@@ -72,7 +72,7 @@ async function runAction({
       parameters: inputObj,
       maxFeePerGas: inputObj._grinderyMaxFeePerGas,
       maxPriorityFeePerGas: inputObj._grinderyMaxPriorityFeePerGas,
-      user: await AccessToken.sign(user, "60s"),
+      userToken: await AccessToken.sign(user, "60s"),
     };
     actionOp = web3Action.operation;
   }
