@@ -249,7 +249,7 @@ export class RuntimeWorkflow {
           environment: this.environment,
         });
       } catch (e) {
-        track(this.accountId, "Workflow Step Error", { workflow: this.key, index, error: e.toString() });
+        track(this.accountId, "Workflow Step Error", { workflow: this.key, index, error: String(e) });
         console.debug(`[${this.key}] Failed step ${index}: ${e.toString()}`);
         await logCollection.updateOne(
           {
@@ -289,6 +289,18 @@ export class RuntimeWorkflow {
     const currentVersion = this.version;
     if (this.startCount > 10) {
       console.error(`[${this.key}] Too many attempts to setup signal, the workflow is halted`);
+      const logCollection = await getCollection("workflowExecutions");
+      await logCollection.insertOne({
+        workflowKey: this.key,
+        sessionId: "00000000-0000-0000-0000-000000000000",
+        executionId: "00000000-0000-0000-0000-000000000000",
+        stepIndex: -1,
+        input: {},
+        error: "Too many attempts to setup signal, the workflow is halted",
+        startedAt: Date.now(),
+        endedAt: Date.now(),
+      });
+      track(this.accountId, "Workflow Halted After Too Many Trigger Failures", { workflow: this.key });
       return;
     }
     this.startCount++;
@@ -324,6 +336,7 @@ export class RuntimeWorkflow {
       };
       trigger = web3Trigger;
     }
+    const sessionId = uuidv4();
     if (trigger.operation.type === "hook") {
       throw new Error(`Not implemented: ${trigger.operation.type}`);
     } else if (trigger.operation.type === "polling") {
@@ -331,7 +344,6 @@ export class RuntimeWorkflow {
       if (!/^wss?:\/\//i.test(url)) {
         throw new Error(`Unsupported polling URL: ${url}`);
       }
-      const sessionId = uuidv4();
       console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
       const triggerSocket = new JsonRpcWebSocket(url);
       triggerSocket.on("close", (code, reason) => {
@@ -369,6 +381,18 @@ export class RuntimeWorkflow {
           this.triggerSocket = null;
         }
         triggerSocket.close(3001, String(e));
+        const logCollection = await getCollection("workflowExecutions");
+        await logCollection.insertOne({
+          workflowKey: this.key,
+          sessionId,
+          executionId: "00000000-0000-0000-0000-000000000000",
+          stepIndex: -1,
+          input: {},
+          error: String(e),
+          startedAt: Date.now(),
+          endedAt: Date.now(),
+        });
+        track(this.accountId, "Workflow Trigger Setup Error", { workflow: this.key, error: String(e) });
         setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
         return;
       }
