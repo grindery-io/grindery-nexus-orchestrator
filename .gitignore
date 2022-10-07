@@ -49,3 +49,4 @@ jspm_packages
 
 dist
 src/sandbox.ts
+src/.archive

@@ -7,6 +7,7 @@ import { createDebug } from "./debug";
 import { getConnectorSchema } from "grindery-nexus-common-utils";
 import { track } from "./tracking";
 import { replaceTokens } from "grindery-nexus-common-utils/dist/utils";
+import { AccessToken, TAccessToken } from "./jwt";
 
 const debug = createDebug("runtimeWorkflow");
 
@@ -40,6 +41,7 @@ async function runAction({
   executionId,
   dryRun,
   environment,
+  user,
 }: {
   action: ActionSchema;
   input: { [key: string]: unknown };
@@ -48,6 +50,7 @@ async function runAction({
   executionId: string;
   dryRun?: boolean;
   environment: string;
+  user: TAccessToken;
 }) {
   let operationKey = step.operation;
   let actionOp = action.operation;
@@ -69,6 +72,7 @@ async function runAction({
       parameters: inputObj,
       maxFeePerGas: inputObj._grinderyMaxFeePerGas,
       maxPriorityFeePerGas: inputObj._grinderyMaxPriorityFeePerGas,
+      user: await AccessToken.sign(user, "60s"),
     };
     actionOp = web3Action.operation;
   }
@@ -103,11 +107,13 @@ export async function runSingleAction({
   input,
   dryRun,
   environment,
+  user,
 }: {
   step: OperationSchema;
   input: unknown;
   dryRun?: boolean;
   environment: string;
+  user: TAccessToken;
 }) {
   const connector = await getConnectorSchema(step.connector, environment);
   const action = connector.actions?.find((action) => action.key === step.operation);
@@ -122,6 +128,7 @@ export async function runSingleAction({
     executionId: uuidv4(),
     dryRun,
     environment,
+    user,
   });
 }
 export class RuntimeWorkflow {
@@ -135,7 +142,8 @@ export class RuntimeWorkflow {
     private key: string,
     private workflow: WorkflowSchema,
     private accountId: string,
-    private environment: string
+    private environment: string,
+    private workspace: string | undefined
   ) {}
   async start() {
     this.running = true;
@@ -247,6 +255,7 @@ export class RuntimeWorkflow {
           sessionId,
           executionId,
           environment: this.environment,
+          user: { sub: this.accountId, ...(this.workspace ? { workspace: this.workspace, role: "user" } : {}) },
         });
       } catch (e) {
         track(this.accountId, "Workflow Step Error", { workflow: this.key, index, error: String(e) });

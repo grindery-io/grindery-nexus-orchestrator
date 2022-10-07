@@ -31,7 +31,8 @@ async function loadAllWorkflows() {
       workflow.key,
       JSON.parse(workflow.workflow),
       workflow.userAccountId,
-      getWorkflowEnvironment(workflow.key)
+      getWorkflowEnvironment(workflow.key),
+      workflow.workspaceKey
     );
     allWorkflows.set(workflow.key, runtimeWorkflow);
     runtimeWorkflow.start().catch((e) => {
@@ -52,9 +53,19 @@ function stopWorkflow(key: string) {
     allWorkflows.delete(key);
   }
 }
-function loadWorkflow(key: string, workflow: WorkflowSchema, accountId: string) {
+function loadWorkflow({
+  key,
+  workflow,
+  accountId,
+  workspaceKey,
+}: {
+  key: string;
+  workflow: WorkflowSchema;
+  accountId: string;
+  workspaceKey: string | undefined;
+}) {
   stopWorkflow(key);
-  const runtimeWorkflow = new RuntimeWorkflow(key, workflow, accountId, getWorkflowEnvironment(key));
+  const runtimeWorkflow = new RuntimeWorkflow(key, workflow, accountId, getWorkflowEnvironment(key), workspaceKey);
   allWorkflows.set(key, runtimeWorkflow);
   runtimeWorkflow.start().catch((e) => {
     console.error(e);
@@ -97,7 +108,7 @@ export async function createWorkflow(
     updatedAt: Date.now(),
   });
   if (enabled) {
-    loadWorkflow(key, workflow, userAccountId);
+    loadWorkflow({ key, workflow, accountId: userAccountId, workspaceKey });
   }
   track(userAccountId, "Create Workflow", {
     workflow: key,
@@ -145,7 +156,7 @@ export async function updateWorkflow(
   const enabled = workflow.state !== "off";
   await collection.updateOne({ key }, { $set: { workflow: JSON.stringify(workflow), enabled, updatedAt: Date.now() } });
   if (enabled) {
-    loadWorkflow(key, workflow, userAccountId);
+    loadWorkflow({ key, workflow, accountId: userAccountId, workspaceKey: existingWorkflow.workspaceKey });
   } else {
     stopWorkflow(key);
   }
@@ -204,7 +215,7 @@ export async function listWorkflows(
     ...(workspaceKey ? {} : { userAccountId }),
     workspaceKey: workspaceKey ? { $eq: workspaceKey } : { $in: [undefined, ""] },
   });
-  return (await result.toArray()).map((x) => ({
+  return (await result.toArray()).map((x: DbSchema["workflows"]) => ({
     ...x,
     workflow: JSON.parse(x.workflow),
     state: x.enabled ? "on" : "off",
@@ -305,10 +316,13 @@ export async function testAction(
   },
   { context: { user } }: { context: Context }
 ) {
+  if (!user) {
+    throw new Error("user is required");
+  }
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   track(userAccountId, "Test Action", { connector: step.connector, action: step.operation, environment });
-  return await runSingleAction({ step, input, dryRun: true, environment: environment || "production" });
+  return await runSingleAction({ step, input, dryRun: true, environment: environment || "production", user });
 }
 
 export async function isAllowedUser(_, { context: { user } }: { context: Context }) {
