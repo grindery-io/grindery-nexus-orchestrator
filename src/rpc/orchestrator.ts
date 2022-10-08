@@ -325,37 +325,46 @@ export async function testAction(
   return await runSingleAction({ step, input, dryRun: true, environment: environment || "production", user });
 }
 
+const isAllowedUserCache = new Map<string, boolean | Promise<boolean>>();
 export async function isAllowedUser(_, { context: { user } }: { context: Context }) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
-  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
-    filterGroups: [
-      {
-        filters: [
-          {
-            propertyName: "ceramic_did",
-            operator: "EQ",
-            value: userAccountId,
-          },
-          {
-            propertyName: "approved_for_early_access",
-            operator: "EQ",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            value: true as any,
-          },
-        ],
-      },
-    ],
-    properties: ["email"],
-    limit: 1,
-    after: 0,
-    sorts: [],
-  });
-  if (resp.results.length) {
-    return true;
+  if (!isAllowedUserCache.has(userAccountId)) {
+    isAllowedUserCache.set(
+      userAccountId,
+      (async () => {
+        const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+        const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "ceramic_did",
+                  operator: "EQ",
+                  value: userAccountId,
+                },
+                {
+                  propertyName: "approved_for_early_access",
+                  operator: "EQ",
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  value: true as any,
+                },
+              ],
+            },
+          ],
+          properties: ["email"],
+          limit: 1,
+          after: 0,
+          sorts: [],
+        });
+        if (resp.results.length) {
+          return true;
+        }
+        return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
+      })()
+    );
   }
-  return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
+  return await isAllowedUserCache.get(userAccountId);
 }
 
 export async function requestEarlyAccess({ email }: { email: string }, { context: { user } }: { context: Context }) {

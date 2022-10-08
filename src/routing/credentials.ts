@@ -13,6 +13,7 @@ type AuthStateExtra = {
   state: string;
   environment: string;
   connectorId: string;
+  workspace: string | undefined;
 };
 type TAuthState = TypedJWTPayload<AuthStateExtra>;
 const AuthState = typedCipher<AuthStateExtra>("urn:grindery:auth-state");
@@ -21,6 +22,7 @@ type CallbackStateExtra = {
   code: string;
   environment: string;
   connectorId: string;
+  workspace: string | undefined;
 };
 type TCallbackState = TypedJWTPayload<CallbackStateExtra>;
 const CallbackState = typedCipher<CallbackStateExtra>("urn:grindery:callback-state");
@@ -51,6 +53,7 @@ router.get("/:environment/:connectorId/auth", auth, async (req: Request & { user
   const state = await AuthState.encrypt(
     {
       sub: req.user.sub,
+      workspace: "workspace" in req.user ? req.user.workspace : undefined,
       redirectUri: String(req.query.redirect_uri),
       state: String(req.query.state),
       environment,
@@ -94,6 +97,7 @@ router.get("/auth/callback", async (req, res) => {
             (connector.authentication?.type === "oauth2" && connector.authentication.oauth2Config.codeParam) || "code"
           ]
         ),
+        workspace: decryptedState.workspace,
       },
       "300s"
     );
@@ -109,6 +113,9 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
   let decryptedState: TCallbackState;
   try {
     decryptedState = await CallbackState.decrypt(String(req.body?.code), { subject: req.user.sub });
+    if (decryptedState.workspace !== ("workspace" in req.user ? req.user.workspace : undefined)) {
+      throw new Error("Workspace doesn't match");
+    }
   } catch (e) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid code" });
   }
