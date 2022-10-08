@@ -361,7 +361,20 @@ export async function isAllowedUser(_, { context: { user } }: { context: Context
           return true;
         }
         return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
-      })()
+      })().then(
+        (result) => {
+          if (result) {
+            isAllowedUserCache.set(userAccountId, result);
+          } else {
+            isAllowedUserCache.delete(userAccountId);
+          }
+          return result;
+        },
+        (e) => {
+          isAllowedUserCache.delete(userAccountId);
+          return Promise.reject(e);
+        }
+      )
     );
   }
   return await isAllowedUserCache.get(userAccountId);
