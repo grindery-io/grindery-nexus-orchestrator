@@ -116,6 +116,7 @@ export async function createWorkflow(
     role: user && "role" in user ? user.role : undefined,
     source: workflow.source || "unknown",
     title: workflow.title,
+    enabled,
   });
   return { key };
 }
@@ -166,6 +167,7 @@ export async function updateWorkflow(
     role: user && "role" in user ? user.role : undefined,
     source: workflow.source || "unknown",
     title: workflow.title,
+    enabled,
   });
   return { key };
 }
