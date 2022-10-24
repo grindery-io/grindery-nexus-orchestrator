@@ -173,7 +173,10 @@ export class RuntimeWorkflow {
         if (!this.triggerSocket?.isOpen) {
           console.warn(`[${this.key}] Not sending keep alive request because WebSocket is not open`);
         } else {
-          await this.triggerSocket?.request("ping");
+          const socket = this.triggerSocket;
+          const timeout = setTimeout(() => socket.close(3003, "ping doesn't return"), 120000);
+          await socket.request("ping");
+          clearTimeout(timeout);
         }
         await new Promise((res) => setTimeout(res, parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000));
       }
