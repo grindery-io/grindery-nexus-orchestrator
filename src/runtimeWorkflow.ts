@@ -170,6 +170,7 @@ export class RuntimeWorkflow {
         if (!this.running) {
           return;
         }
+        await new Promise((res) => setTimeout(res, parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000));
         if (!this.triggerSocket?.isOpen) {
           console.warn(`[${this.key}] Not sending keep alive request because WebSocket is not open`);
         } else {
@@ -178,7 +179,6 @@ export class RuntimeWorkflow {
           await socket.request("ping");
           clearTimeout(timeout);
         }
-        await new Promise((res) => setTimeout(res, parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000));
       }
     } catch (e) {
       console.warn(`[${this.key}] Failed to keep alive: ${e.toString()}`);
