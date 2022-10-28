@@ -137,6 +137,7 @@ export class RuntimeWorkflow {
   private startCount = 0;
   private version = 0;
   private keepAliveRunning = false;
+  private setupTriggerRunning = false;
 
   constructor(
     private key: string,
@@ -175,12 +176,18 @@ export class RuntimeWorkflow {
           console.warn(`[${this.key}] Not sending keep alive request because WebSocket is not open`);
         } else {
           const socket = this.triggerSocket;
-          const timeout = setTimeout(() => {
+          let timeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+            timeout = null;
             console.warn(`[${this.key}] Keep alive: Ping doesn't return`);
             socket.close(3003, "ping doesn't return");
           }, 120000);
-          await socket.request("ping");
-          clearTimeout(timeout);
+          try {
+            await socket.request("ping");
+          } finally {
+            if (timeout) {
+              clearTimeout(timeout);
+            }
+          }
         }
       }
     } catch (e) {
@@ -300,6 +307,16 @@ export class RuntimeWorkflow {
     console.debug(`[${this.key}] Completed`);
   }
   async setupTrigger() {
+    if (this.setupTriggerRunning) {
+      return;
+    }
+    try {
+      return await this._setupTrigger();
+    } finally {
+      this.setupTriggerRunning = false;
+    }
+  }
+  private async _setupTrigger() {
     this.version++;
     const currentVersion = this.version;
     if (this.startCount > 10) {
@@ -361,7 +378,7 @@ export class RuntimeWorkflow {
       }
       console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
       const triggerSocket = new JsonRpcWebSocket(url);
-      triggerSocket.on("close", (code, reason) => {
+      triggerSocket.once("close", (code, reason) => {
         console.log(`[${this.key}] WebSocket closed (${code} - ${reason})`);
         if (triggerSocket !== this.triggerSocket) {
           return;
