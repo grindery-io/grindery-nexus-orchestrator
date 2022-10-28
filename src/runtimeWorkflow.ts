@@ -310,6 +310,7 @@ export class RuntimeWorkflow {
     if (this.setupTriggerRunning) {
       return;
     }
+    this.setupTriggerRunning = true;
     try {
       return await this._setupTrigger();
     } finally {
