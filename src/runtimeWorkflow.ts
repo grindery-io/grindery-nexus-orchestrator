@@ -166,12 +166,13 @@ export class RuntimeWorkflow {
       return;
     }
     this.keepAliveRunning = true;
+    const keepAliveInterval = parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000;
     try {
       for (;;) {
         if (!this.running) {
           return;
         }
-        await new Promise((res) => setTimeout(res, parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000));
+        await new Promise((res) => setTimeout(res, keepAliveInterval * 0.9 + Math.random() * keepAliveInterval * 0.2));
         if (!this.triggerSocket?.isOpen) {
           console.warn(`[${this.key}] Not sending keep alive request because WebSocket is not open`);
         } else {
