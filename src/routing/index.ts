@@ -68,7 +68,7 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
       .json({ jsonrpc: "2.0", error: { code: 1, message: "Operation not found" }, id: req.body.id });
   }
   let url = "";
-  if (trigger.operation.type === "polling") {
+  if (trigger.operation.type === "polling" || trigger.operation.type === "api") {
     url = trigger.operation.operation.url;
   }
   if (!url || !/^wss?:\/\//i.test(url)) {
