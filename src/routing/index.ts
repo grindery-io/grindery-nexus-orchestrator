@@ -60,9 +60,12 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
       .status(404)
       .json({ jsonrpc: "2.0", error: { code: 1, message: "Connector not found" }, id: req.body.id });
   }
-  const trigger = schema.triggers?.find((t) => t.key === req.params.key);
+  const trigger =
+    schema.triggers?.find((t) => t.key === req.params.key) || schema.actions?.find((t) => t.key === req.params.key);
   if (!trigger) {
-    return res.status(404).json({ jsonrpc: "2.0", error: { code: 1, message: "Trigger not found" }, id: req.body.id });
+    return res
+      .status(404)
+      .json({ jsonrpc: "2.0", error: { code: 1, message: "Operation not found" }, id: req.body.id });
   }
   let url = "";
   if (trigger.operation.type === "polling") {
@@ -71,7 +74,7 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
   if (!url || !/^wss?:\/\//i.test(url)) {
     return res.status(400).json({
       jsonrpc: "2.0",
-      error: { code: -32600, message: "This trigger doesn't support webhook" },
+      error: { code: -32600, message: "This operation doesn't support webhook" },
       id: req.body.id,
     });
   }
