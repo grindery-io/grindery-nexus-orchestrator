@@ -117,6 +117,8 @@ export async function createWorkflow(
     source: workflow.source || "unknown",
     title: workflow.title,
     enabled,
+    triggers: workflow.trigger ? [`${workflow.trigger.connector}/${workflow.trigger.operation}`] : [],
+    actions: workflow.actions.map((x) => `${x.connector}/${x.operation}`),
   });
   return { key };
 }
@@ -168,6 +170,8 @@ export async function updateWorkflow(
     source: workflow.source || "unknown",
     title: workflow.title,
     enabled,
+    triggers: workflow.trigger ? [`${workflow.trigger.connector}/${workflow.trigger.operation}`] : [],
+    actions: workflow.actions.map((x) => `${x.connector}/${x.operation}`),
   });
   return { key };
 }
