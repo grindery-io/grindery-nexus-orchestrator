@@ -1,6 +1,6 @@
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { getConnectorSchema } from "grindery-nexus-common-utils";
+import { getConnectorSchema, WebhookOutput } from "grindery-nexus-common-utils";
 import { ConnectorSchema } from "grindery-nexus-common-utils/dist/types";
 import { ConnectorInput, JsonRpcWebSocket } from "grindery-nexus-common-utils";
 import OAuthRouter from "./oauth";
@@ -80,7 +80,7 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
   }
   const socket = new JsonRpcWebSocket(url);
   try {
-    const resp = await socket.request<ConnectorInput>("callWebhook", {
+    const resp = (await socket.request<ConnectorInput>("callWebhook", {
       key: req.params.key,
       sessionId: uuidv4(),
       credentials: {},
@@ -89,7 +89,19 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
         path: req.params.path,
         payload: req.body,
       },
-    });
+    })) as WebhookOutput;
+    if (resp.returnUnwrapped) {
+      if (resp.statusCode) {
+        res.status(resp.statusCode);
+      }
+      if (resp.contentType) {
+        res.type(resp.contentType);
+      }
+      if (typeof resp.payload === "string") {
+        return res.send(resp.payload);
+      }
+      return res.json(resp.payload);
+    }
     return res.json({
       jsonrpc: "2.0",
       result: resp,
