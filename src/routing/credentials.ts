@@ -169,9 +169,11 @@ router.all("/:connectorId/request/:domain*", async (req: Request & { rawBody?: B
     return res.status(400).json({ error: "invalid_template_scope" });
   }
   const pathM = /^\/+[^/]+?\/+[^/]+?\/+[^/]+?\/+(.*)$/.exec(req.path);
+  const domain = req.params["domain"];
+  const isLocal = domain.includes(":") && !domain.includes(".");
   const request = {
     method: req.method,
-    url: `https://${req.params["domain"]}/${pathM?.[1] || ""}`,
+    url: `${isLocal ? "http" : "https"}://${domain}/${pathM?.[1] || ""}`,
     params: req.query,
     headers: {},
     body: undefined as undefined | string,
