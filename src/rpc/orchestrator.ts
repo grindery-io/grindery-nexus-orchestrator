@@ -462,3 +462,45 @@ export async function saveWalletAddress(
   }
   return true;
 }
+
+export async function saveNotificationsState(
+  {
+    state,
+  }: {
+    state: string;
+  },
+  { context: { user } }: { context: Context }
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  if (!state) {
+    throw new InvalidParamsError("Missing notifications state");
+  }
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          },
+        ],
+      },
+    ],
+    properties: ["nexus_notifications_state"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  const newProps: { [key: string]: string } = {
+    nexus_notifications_state: state,
+  };
+  if (resp.results[0]) {
+    await hubspotClient.crm.contacts.basicApi.update(resp.results[0].id, { properties: newProps });
+  } else {
+    await hubspotClient.crm.contacts.basicApi.create({ properties: newProps });
+  }
+  return true;
+}
