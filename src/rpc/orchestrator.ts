@@ -466,8 +466,10 @@ export async function saveWalletAddress(
 export async function saveNotificationsState(
   {
     state,
+    notificationToken,
   }: {
     state: string;
+    notificationToken?: string;
   },
   { context: { user } }: { context: Context }
 ) {
@@ -497,6 +499,9 @@ export async function saveNotificationsState(
   const newProps: { [key: string]: string } = {
     nexus_notifications_state: state,
   };
+  if (notificationToken) {
+    newProps.push_notifications_token = notificationToken;
+  }
   if (resp.results[0]) {
     await hubspotClient.crm.contacts.basicApi.update(resp.results[0].id, { properties: newProps });
   } else {
