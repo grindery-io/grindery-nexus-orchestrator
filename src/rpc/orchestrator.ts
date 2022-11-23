@@ -350,7 +350,7 @@ export async function isAllowedUser(_, { context: { user } }: { context: Context
                   value: userAccountId,
                 },
                 {
-                  propertyName: "approved_for_early_access",
+                  propertyName: "early_access__auto_",
                   operator: "EQ",
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   value: true as any,
