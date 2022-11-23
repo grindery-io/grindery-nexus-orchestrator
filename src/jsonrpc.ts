@@ -17,6 +17,7 @@ import {
   saveWalletAddress,
   moveWorkflowToWorkspace,
   saveNotificationsState,
+  runAction,
 } from "./rpc/orchestrator";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
@@ -90,6 +91,7 @@ export function createServer() {
     requestEarlyAccess,
     saveWalletAddress,
     saveNotificationsState,
+    runAction,
 
     createWorkspace,
     updateWorkspace,

@@ -509,3 +509,24 @@ export async function saveNotificationsState(
   }
   return true;
 }
+
+export async function runAction(
+  {
+    step,
+    input,
+    environment,
+  }: {
+    step: OperationSchema;
+    input: unknown;
+    environment: string;
+  },
+  { context: { user } }: { context: Context }
+) {
+  if (!user) {
+    throw new Error("user is required");
+  }
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  track(userAccountId, "Run Single Action", { connector: step.connector, action: step.operation, environment });
+  return await runSingleAction({ step, input, dryRun: false, environment: environment || "production", user });
+}
