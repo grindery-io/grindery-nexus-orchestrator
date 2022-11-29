@@ -350,7 +350,7 @@ export async function isAllowedUser(_, { context: { user } }: { context: Context
                   value: userAccountId,
                 },
                 {
-                  propertyName: "approved_for_early_access",
+                  propertyName: "early_access__auto_",
                   operator: "EQ",
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   value: true as any,
@@ -386,7 +386,10 @@ export async function isAllowedUser(_, { context: { user } }: { context: Context
   return await isAllowedUserCache.get(userAccountId);
 }
 
-export async function requestEarlyAccess({ email }: { email: string }, { context: { user } }: { context: Context }) {
+export async function requestEarlyAccess(
+  { email, source }: { email: string; source?: string },
+  { context: { user } }: { context: Context }
+) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   if (!email) {
@@ -401,6 +404,7 @@ export async function requestEarlyAccess({ email }: { email: string }, { context
       fields: [
         { name: "email", value: email },
         { name: "ceramic_did", value: userAccountId },
+        { name: "early_access_requested_from", value: source || "" },
       ],
     }
   );
