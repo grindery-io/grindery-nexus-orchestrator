@@ -406,6 +406,19 @@ export async function requestEarlyAccess(
         { name: "ceramic_did", value: userAccountId },
         { name: "early_access_requested_from", value: source || "" },
       ],
+      legalConsentOptions: {
+        consent: {
+          consentToProcess: true,
+          text: "I agree to allow Grindery - New to store and process my personal data.",
+          communications: [
+            {
+              value: true,
+              subscriptionTypeId: 47617892,
+              text: "I agree to receive other communications from Grindery - New.",
+            },
+          ],
+        },
+      },
     }
   );
   identify(userAccountId, { email });
