@@ -6,12 +6,19 @@ import { Context } from "../jsonrpc";
 import { verifyAccountId } from "./orchestrator";
 
 const isAllowedUserCache = new Map<string, boolean | Promise<boolean>>();
-export async function isAllowedUser(_, { context: { user } }: { context: Context }) {
+export async function isAllowedUser({ app }: { app?: string }, { context: { user } }: { context: Context }) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  if (!isAllowedUserCache.has(userAccountId)) {
+  const hsAccessProperties = {
+    flow: "early_access__auto___flow_",
+    ping: "early_access__auto___ping_",
+    gateway: "early_access__auto___gateway_",
+    cds: "early_access__auto___cds_editor_",
+  };
+  const userAccount = app ? `${app}:${userAccountId}` : userAccountId;
+  if (!isAllowedUserCache.has(userAccount)) {
     isAllowedUserCache.set(
-      userAccountId,
+      userAccount,
       (async () => {
         const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
         const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
@@ -24,7 +31,7 @@ export async function isAllowedUser(_, { context: { user } }: { context: Context
                   value: userAccountId,
                 },
                 {
-                  propertyName: "early_access__auto_",
+                  propertyName: app && hsAccessProperties[app] ? hsAccessProperties[app] : "early_access__auto_",
                   operator: "EQ",
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   value: true as any,
@@ -44,20 +51,20 @@ export async function isAllowedUser(_, { context: { user } }: { context: Context
       })().then(
         (result) => {
           if (result) {
-            isAllowedUserCache.set(userAccountId, result);
+            isAllowedUserCache.set(userAccount, result);
           } else {
-            isAllowedUserCache.delete(userAccountId);
+            isAllowedUserCache.delete(userAccount);
           }
           return result;
         },
         (e) => {
-          isAllowedUserCache.delete(userAccountId);
+          isAllowedUserCache.delete(userAccount);
           return Promise.reject(e);
         }
       )
     );
   }
-  return await isAllowedUserCache.get(userAccountId);
+  return await isAllowedUserCache.get(userAccount);
 }
 
 export async function requestEarlyAccess(
