@@ -68,7 +68,7 @@ export async function isAllowedUser({ app }: { app?: string }, { context: { user
 }
 
 export async function requestEarlyAccess(
-  { email, source }: { email: string; source?: string },
+  { email, source, app }: { email: string; source?: string; app?: string },
   { context: { user } }: { context: Context }
 ) {
   const userAccountId = user?.sub || "";
@@ -79,14 +79,42 @@ export async function requestEarlyAccess(
   if (!/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email)) {
     throw new InvalidParamsError("Invalid email");
   }
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          },
+        ],
+      },
+    ],
+    properties: ["email", "access_status"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  const access_status = resp.results?.[0]?.properties?.access_status?.split(";") || [];
+  if (app) {
+    access_status.push(app);
+  }
   await axios.post(
     `https://api.hsforms.com/submissions/v3/integration/submit/${process.env.HS_PORTAL_ID}/${process.env.HS_EARLY_ACCESS_FORM}`,
     {
       fields: [
         { name: "email", value: email },
         { name: "ceramic_did", value: userAccountId },
-        { name: "early_access_requested_from", value: source || "" },
+        {
+          name: "access_status",
+          value: access_status.length > 0 ? access_status.join(";") : "",
+        },
       ],
+      context: {
+        pageUri: source || "",
+      },
       legalConsentOptions: {
         consent: {
           consentToProcess: true,
