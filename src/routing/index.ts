@@ -83,7 +83,6 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
     const resp = (await socket.request<ConnectorInput>("callWebhook", {
       key: req.params.key,
       sessionId: uuidv4(),
-      credentials: {},
       fields: {
         method: req.method.toUpperCase(),
         path: req.params.path,
