@@ -72,9 +72,12 @@ async function runAction({
       parameters: inputObj,
       maxFeePerGas: inputObj._grinderyMaxFeePerGas,
       maxPriorityFeePerGas: inputObj._grinderyMaxPriorityFeePerGas,
-      userToken: await AccessToken.sign(user, "60s"),
+      userToken: await AccessToken.sign(user, "60s"), // Deprecated, remove this after web3 driver switches to _grinderyUserToken
     };
     actionOp = web3Action.operation;
+  }
+  if ("requiresUserToken" in actionOp && actionOp.requiresUserToken) {
+    input._grinderyUserToken = await AccessToken.sign(user, "60s");
   }
   if (actionOp.type === "api") {
     const url = actionOp.operation.url;
@@ -269,7 +272,7 @@ export class RuntimeWorkflow {
           sessionId,
           executionId,
           environment: this.environment,
-          user: { sub: this.accountId, ...(this.workspace ? { workspace: this.workspace, role: "user" } : {}) },
+          user: this.getUser(),
         });
       } catch (e) {
         track(this.accountId, "Workflow Step Error", { workflow: this.key, index, error: String(e) });
@@ -307,6 +310,10 @@ export class RuntimeWorkflow {
     track(this.accountId, "Workflow Complete", { workflow: this.key });
     console.debug(`[${this.key}] Completed`);
   }
+  private getUser(): TAccessToken {
+    return { sub: this.accountId, ...(this.workspace ? { workspace: this.workspace, role: "user" } : {}) };
+  }
+
   async setupTrigger() {
     if (this.setupTriggerRunning) {
       return;
@@ -369,6 +376,9 @@ export class RuntimeWorkflow {
         parameterFilters: fields,
       };
       trigger = web3Trigger;
+    }
+    if ("requiresUserToken" in trigger.operation && trigger.operation.requiresUserToken) {
+      fields._grinderyUserToken = await AccessToken.sign(this.getUser(), "60s");
     }
     const sessionId = uuidv4();
     if (trigger.operation.type === "hook") {
