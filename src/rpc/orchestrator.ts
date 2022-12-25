@@ -359,12 +359,12 @@ export async function testTrigger(
   );
   socket.on("close", () => triggerInstance.stop());
   socket.on("error", () => triggerInstance.stop());
-  triggerInstance.on("signal", (payload) =>
+  triggerInstance.on("signal", (output) =>
     socket.send(
       JSON.stringify({
         jsonrpc: "2.0",
         method: "notifySignal",
-        params: { key: trigger.operation, payload },
+        params: { key: trigger.operation, payload: output.payload },
       })
     )
   );
