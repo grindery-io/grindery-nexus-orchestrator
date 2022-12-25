@@ -5,30 +5,31 @@ import { WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
 import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "grindery-nexus-common-utils";
 import { createDebug } from "../debug";
 import { getConnectorSchema } from "grindery-nexus-common-utils";
-import { track } from "../tracking";
+import { track as _track } from "../tracking";
 import { replaceTokens } from "grindery-nexus-common-utils/dist/utils";
 import { AccessToken, TAccessToken } from "../jwt";
 import { sanitizeInput } from "./utils";
 import { runAction } from "./action";
+import EventEmitter from "node:events";
 
 export * from "./action";
 
 export const debug = createDebug("runtimeWorkflow");
 
-export class RuntimeWorkflow {
-  private running = false;
-  private triggerSocket: JsonRpcWebSocket | null = null;
-  private startCount = 0;
-  private version = 0;
-  private keepAliveRunning = false;
-  private setupTriggerRunning = false;
+abstract class RuntimeWorkflowBase {
+  protected running = false;
+  protected triggerSocket: JsonRpcWebSocket | null = null;
+  protected startCount = 0;
+  protected version = 0;
+  protected keepAliveRunning = false;
+  protected setupTriggerRunning = false;
 
   constructor(
-    private key: string,
-    private workflow: WorkflowSchema,
-    private accountId: string,
-    private environment: string,
-    private workspace: string | undefined
+    protected key: string,
+    protected workflow: WorkflowSchema,
+    protected accountId: string,
+    protected environment: string,
+    protected workspace: string | undefined
   ) {}
   async start() {
     this.running = true;
@@ -37,10 +38,13 @@ export class RuntimeWorkflow {
     await this.setupTrigger();
   }
   stop() {
+    const running = this.running;
     this.running = false;
     this.triggerSocket?.close();
     this.version++;
-    console.debug(`[${this.key}] Stopped`);
+    if (running) {
+      console.debug(`[${this.key}] Stopped`);
+    }
   }
   async keepAlive() {
     if (this.keepAliveRunning) {
@@ -85,7 +89,7 @@ export class RuntimeWorkflow {
       }
     }
   }
-  async onNotifySignal(payload: ConnectorOutput | undefined) {
+  private async onNotifySignal(payload: ConnectorOutput | undefined) {
     if (!this.running) {
       return;
     }
@@ -93,105 +97,10 @@ export class RuntimeWorkflow {
       throw new Error("Invalid payload");
     }
     console.debug(`[${this.key}] Received signal`);
-    track(this.accountId, "Received Signal", { workflow: this.key });
-    this.runWorkflow(payload).catch((e) => {
-      track(this.accountId, "Workflow Error", { workflow: this.key });
-      console.error(e);
-      Sentry.captureException(e);
-    });
+    return await this.handleSignal(payload);
   }
-  async runWorkflow(initialPayload: ConnectorOutput) {
-    const logCollection = await getCollection("workflowExecutions");
-    const sessionId = initialPayload.sessionId;
-    const executionId = uuidv4();
-    await logCollection.insertOne({
-      workflowKey: this.key,
-      sessionId,
-      executionId,
-      stepIndex: -1,
-      input: {},
-      output: initialPayload.payload,
-      startedAt: Date.now(),
-      endedAt: Date.now(),
-    });
-    const context = {} as { [key: string]: unknown };
-    context["trigger"] = initialPayload.payload;
-    let index = 0;
-    for (const step of this.workflow.actions) {
-      console.debug(`[${this.key}] Running step ${index}: ${step.connector}/${step.operation}`);
-      const connector = await getConnectorSchema(step.connector, this.environment);
-      const action = connector.actions?.find((action) => action.key === step.operation);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let error: any = undefined;
-      let input;
-      try {
-        input = sanitizeInput(replaceTokens(step.input || {}, context), action?.operation?.inputFields || []);
-      } catch (e) {
-        error = e;
-      }
-      await logCollection.insertOne({
-        workflowKey: this.key,
-        sessionId,
-        executionId,
-        stepIndex: index,
-        input,
-        startedAt: Date.now(),
-        error: error?.toString(),
-      });
-      if (!action) {
-        throw new Error("Invalid action");
-      }
-      if (error) {
-        return;
-      }
-      let nextInput: unknown;
-      try {
-        nextInput = await runAction({
-          action,
-          input,
-          step,
-          sessionId,
-          executionId,
-          environment: this.environment,
-          user: this.getUser(),
-        });
-      } catch (e) {
-        track(this.accountId, "Workflow Step Error", { workflow: this.key, index, error: String(e) });
-        console.debug(`[${this.key}] Failed step ${index}: ${e.toString()}`);
-        await logCollection.updateOne(
-          {
-            executionId,
-            stepIndex: index,
-          },
-          {
-            $set: {
-              error: e.toString(),
-              endedAt: Date.now(),
-            },
-          }
-        );
-        return;
-      }
-      track(this.accountId, "Workflow Step Complete", { workflow: this.key, index });
-      context[`step${index}`] = nextInput;
-      await logCollection.updateOne(
-        {
-          executionId,
-          stepIndex: index,
-        },
-        {
-          $set: {
-            output: nextInput,
-            endedAt: Date.now(),
-          },
-        }
-      );
-      index++;
-    }
-    track(this.accountId, "Workflow Complete", { workflow: this.key });
-    console.debug(`[${this.key}] Completed`);
-  }
-  private getUser(): TAccessToken {
+  protected abstract handleSignal(payload: ConnectorOutput | undefined): Promise<unknown>;
+  protected getUser(): TAccessToken {
     return { sub: this.accountId, ...(this.workspace ? { workspace: this.workspace, role: "user" } : {}) };
   }
 
@@ -222,7 +131,7 @@ export class RuntimeWorkflow {
         startedAt: Date.now(),
         endedAt: Date.now(),
       });
-      track(this.accountId, "Workflow Halted After Too Many Trigger Failures", { workflow: this.key });
+      this.track(this.accountId, "Workflow Halted After Too Many Trigger Failures", { workflow: this.key });
       return;
     }
     this.startCount++;
@@ -317,7 +226,7 @@ export class RuntimeWorkflow {
           startedAt: Date.now(),
           endedAt: Date.now(),
         });
-        track(this.accountId, "Workflow Trigger Setup Error", { workflow: this.key, error: String(e) });
+        this.track(this.accountId, "Workflow Trigger Setup Error", { workflow: this.key, error: String(e) });
         setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
         return;
       }
@@ -333,5 +242,127 @@ export class RuntimeWorkflow {
     } else {
       throw new Error(`Invalid trigger type: ${trigger.operation.type}`);
     }
+  }
+  protected track(_accountId: string, _event: string, _properties: { [key: string]: unknown } = {}) {
+    /* Placeholder intended to be overridden */
+  }
+}
+
+export class RuntimeWorkflow extends RuntimeWorkflowBase {
+  protected track(accountId: string, event: string, properties: { [key: string]: unknown } = {}) {
+    _track(accountId, event, properties);
+  }
+  protected async handleSignal(payload: ConnectorOutput) {
+    this.track(this.accountId, "Received Signal", { workflow: this.key });
+    this.runWorkflow(payload).catch((e) => {
+      this.track(this.accountId, "Workflow Error", { workflow: this.key });
+      console.error(e);
+      Sentry.captureException(e);
+    });
+  }
+  private async runWorkflow(initialPayload: ConnectorOutput) {
+    const logCollection = await getCollection("workflowExecutions");
+    const sessionId = initialPayload.sessionId;
+    const executionId = uuidv4();
+    await logCollection.insertOne({
+      workflowKey: this.key,
+      sessionId,
+      executionId,
+      stepIndex: -1,
+      input: {},
+      output: initialPayload.payload,
+      startedAt: Date.now(),
+      endedAt: Date.now(),
+    });
+    const context = {} as { [key: string]: unknown };
+    context["trigger"] = initialPayload.payload;
+    let index = 0;
+    for (const step of this.workflow.actions) {
+      console.debug(`[${this.key}] Running step ${index}: ${step.connector}/${step.operation}`);
+      const connector = await getConnectorSchema(step.connector, this.environment);
+      const action = connector.actions?.find((action) => action.key === step.operation);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let error: any = undefined;
+      let input;
+      try {
+        input = sanitizeInput(replaceTokens(step.input || {}, context), action?.operation?.inputFields || []);
+      } catch (e) {
+        error = e;
+      }
+      await logCollection.insertOne({
+        workflowKey: this.key,
+        sessionId,
+        executionId,
+        stepIndex: index,
+        input,
+        startedAt: Date.now(),
+        error: error?.toString(),
+      });
+      if (!action) {
+        throw new Error("Invalid action");
+      }
+      if (error) {
+        return;
+      }
+      let nextInput: unknown;
+      try {
+        nextInput = await runAction({
+          action,
+          input,
+          step,
+          sessionId,
+          executionId,
+          environment: this.environment,
+          user: this.getUser(),
+        });
+      } catch (e) {
+        this.track(this.accountId, "Workflow Step Error", { workflow: this.key, index, error: String(e) });
+        console.debug(`[${this.key}] Failed step ${index}: ${e.toString()}`);
+        await logCollection.updateOne(
+          {
+            executionId,
+            stepIndex: index,
+          },
+          {
+            $set: {
+              error: e.toString(),
+              endedAt: Date.now(),
+            },
+          }
+        );
+        return;
+      }
+      this.track(this.accountId, "Workflow Step Complete", { workflow: this.key, index });
+      context[`step${index}`] = nextInput;
+      await logCollection.updateOne(
+        {
+          executionId,
+          stepIndex: index,
+        },
+        {
+          $set: {
+            output: nextInput,
+            endedAt: Date.now(),
+          },
+        }
+      );
+      index++;
+    }
+    this.track(this.accountId, "Workflow Complete", { workflow: this.key });
+    console.debug(`[${this.key}] Completed`);
+  }
+}
+
+export class StandaloneWorkflowTrigger extends RuntimeWorkflowBase {
+  private emitter = new EventEmitter();
+
+  on(event: "signal", listener: (payload: ConnectorOutput) => void) {
+    this.emitter.on(event, listener);
+  }
+  off(event: "signal", listener: (payload: ConnectorOutput) => void) {
+    this.emitter.off(event, listener);
+  }
+  protected async handleSignal(payload: ConnectorOutput) {
+    this.emitter.emit("signal", payload);
   }
 }

@@ -4,12 +4,13 @@ import { Client as HubSpotClient } from "@hubspot/api-client";
 
 import { DbSchema, getCollection } from "../db";
 import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
-import { runSingleAction, RuntimeWorkflow } from "../runtimeWorkflow";
+import { runSingleAction, RuntimeWorkflow, StandaloneWorkflowTrigger } from "../runtimeWorkflow";
 import { track } from "../tracking";
 import { getWorkflowEnvironment } from "../utils";
 import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { Context } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
+import { WebSocket } from "ws";
 
 export function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -328,6 +329,49 @@ export async function testAction(
   verifyAccountId(userAccountId);
   track(userAccountId, "Test Action", { connector: step.connector, action: step.operation, environment });
   return await runSingleAction({ step, input, dryRun: true, environment: environment || "production", user });
+}
+
+export async function testTrigger(
+  {
+    trigger,
+    environment,
+  }: {
+    trigger: OperationSchema;
+    environment: string;
+  },
+  { context: { user }, socket }: { context: Context; socket: WebSocket }
+) {
+  if (!user) {
+    throw new Error("user is required");
+  }
+  if (!socket) {
+    throw new Error("This function can only be called via WebSocket");
+  }
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  track(userAccountId, "Test Trigger", { connector: trigger.connector, action: trigger.operation, environment });
+  const triggerInstance = new StandaloneWorkflowTrigger(
+    `testtrigger-${uuidv4()}`,
+    { trigger, actions: [], creator: userAccountId, state: "on", signature: "", title: "" },
+    userAccountId,
+    environment,
+    "workspace" in user ? user.workspace : undefined
+  );
+  socket.on("close", () => triggerInstance.stop());
+  socket.on("error", () => triggerInstance.stop());
+  triggerInstance.on("signal", (payload) =>
+    socket.send(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        method: "notifySignal",
+        params: { key: trigger.operation, payload },
+      })
+    )
+  );
+  await triggerInstance.start();
+  if (socket.readyState !== socket.OPEN) {
+    triggerInstance.stop();
+  }
 }
 
 export async function saveNotificationsState(

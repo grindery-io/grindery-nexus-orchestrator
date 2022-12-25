@@ -11,6 +11,7 @@ import {
   getWorkflowExecutionLog,
   listWorkflows,
   testAction,
+  testTrigger,
   updateWorkflow,
   moveWorkflowToWorkspace,
   saveNotificationsState,
@@ -90,6 +91,7 @@ export function createServer() {
     saveWalletAddress,
     saveNotificationsState,
     runAction,
+    testTrigger,
 
     createWorkspace,
     updateWorkspace,
