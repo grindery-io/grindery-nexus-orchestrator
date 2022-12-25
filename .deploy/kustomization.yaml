@@ -1,5 +1,5 @@
 resources:
-- deployer/backend-config.yaml
+- backend-config.yaml
 - deployer/defaults/deployments.yaml
 - deployer/defaults/services.yaml
 patchesStrategicMerge:
