@@ -3,4 +3,4 @@ kind: Service
 metadata:
   name: APP_NAME
   annotations:
-    cloud.google.com/backend-config: '{“default”: APP_NAME-backendconfig”}'
+    cloud.google.com/backend-config: '{"default": "APP_NAME-backendconfig"}'
