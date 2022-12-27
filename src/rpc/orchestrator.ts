@@ -7,10 +7,9 @@ import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dis
 import { runSingleAction, RuntimeWorkflow, StandaloneWorkflowTrigger } from "../runtimeWorkflow";
 import { track } from "../tracking";
 import { getWorkflowEnvironment } from "../utils";
-import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
+import { IJsonRpcConnection, InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { Context } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
-import { WebSocket } from "ws";
 
 export function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -339,12 +338,12 @@ export async function testTrigger(
     trigger: OperationSchema;
     environment: string;
   },
-  { context: { user }, socket }: { context: Context; socket: WebSocket }
+  { context: { user }, connection }: { context: Context; connection: IJsonRpcConnection }
 ) {
   if (!user) {
     throw new Error("user is required");
   }
-  if (!socket) {
+  if (!connection) {
     throw new Error("This function can only be called via WebSocket");
   }
   const userAccountId = user?.sub || "";
@@ -357,19 +356,17 @@ export async function testTrigger(
     environment,
     "workspace" in user ? user.workspace : undefined
   );
-  socket.on("close", () => triggerInstance.stop());
-  socket.on("error", () => triggerInstance.stop());
+  connection.on("close", () => triggerInstance.stop());
+  connection.on("error", () => triggerInstance.stop());
   triggerInstance.on("signal", (output) =>
-    socket.send(
-      JSON.stringify({
-        jsonrpc: "2.0",
-        method: "notifySignal",
-        params: { key: trigger.operation, payload: output.payload },
-      })
-    )
+    connection.send({
+      jsonrpc: "2.0",
+      method: "notifySignal",
+      params: { key: trigger.operation, payload: output.payload },
+    })
   );
   await triggerInstance.start();
-  if (socket.readyState !== socket.OPEN) {
+  if (!connection.isOpen()) {
     triggerInstance.stop();
   }
 }
