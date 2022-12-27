@@ -10,7 +10,7 @@
     "server": "[ -f server.js ] && node server || ts-node src/server",
     "server:dist": "cd dist && node server",
     "prepare": "husky install",
-    "test": "eslint src/**/*.ts && tsc -p tsconfig.json --noEmit"
+    "test": "eslint --ext js,ts src/ && tsc -p tsconfig.json --noEmit"
   },
   "author": "",
   "license": "MIT",
