@@ -7,8 +7,8 @@ import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dis
 import { runSingleAction, RuntimeWorkflow, StandaloneWorkflowTrigger } from "../runtimeWorkflow";
 import { track } from "../tracking";
 import { getWorkflowEnvironment } from "../utils";
-import { IJsonRpcConnection, InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
-import { Context } from "../jsonrpc";
+import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
+import { RpcServerParams } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
 
 export function verifyAccountId(accountId: string) {
@@ -84,7 +84,7 @@ async function checkWorkspacePermission(workspaceKey: string, userAccountId: str
 
 export async function createWorkflow(
   { workflow, workspaceKey }: { workflow: WorkflowSchema; workspaceKey?: string },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -146,7 +146,7 @@ export async function updateWorkflow(
     key: string;
     workflow: WorkflowSchema;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -183,7 +183,7 @@ export async function moveWorkflowToWorkspace(
     key: string;
     newWorkspaceKey: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -208,7 +208,7 @@ export async function moveWorkflowToWorkspace(
 
 export async function listWorkflows(
   { workspaceKey }: { workspaceKey?: string },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -239,7 +239,7 @@ export async function getWorkflowExecutions(
     until?: number;
     limit?: number;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -263,7 +263,7 @@ export async function getWorkflowExecutions(
 }
 export async function getWorkflowExecutionLog(
   { executionId }: { executionId: string },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -285,7 +285,7 @@ export async function getWorkflowExecutionLog(
   return ret;
 }
 
-export async function deleteWorkflow({ key }: { key: string }, { context: { user } }: { context: Context }) {
+export async function deleteWorkflow({ key }: { key: string }, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const workflow = await fetchWorkflowAndCheckPermission(key, userAccountId);
@@ -319,7 +319,7 @@ export async function testAction(
     input: unknown;
     environment: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   if (!user) {
     throw new Error("user is required");
@@ -338,7 +338,7 @@ export async function testTrigger(
     trigger: OperationSchema;
     environment: string;
   },
-  { context: { user }, connection }: { context: Context; connection: IJsonRpcConnection }
+  { context: { user }, connection }: RpcServerParams
 ) {
   if (!user) {
     throw new Error("user is required");
@@ -379,7 +379,7 @@ export async function saveNotificationsState(
     state: string;
     notificationToken?: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -428,7 +428,7 @@ export async function runAction(
     input: unknown;
     environment: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   if (!user) {
     throw new Error("user is required");

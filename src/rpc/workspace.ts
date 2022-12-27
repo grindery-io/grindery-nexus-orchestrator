@@ -3,7 +3,7 @@ import { UpdateFilter } from "mongodb";
 import { v4 as uuidv4 } from "uuid";
 
 import { DbSchema, getCollection } from "../db";
-import { Context } from "../jsonrpc";
+import { RpcServerParams } from "../jsonrpc";
 import { AccessToken } from "../jwt";
 import { track } from "../tracking";
 
@@ -15,7 +15,7 @@ export async function createWorkspace(
     admins,
     users,
   }: { title: string; iconUrl?: string; about?: string; admins?: string[]; users?: string[] },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   admins = admins || [userAccountId];
@@ -67,7 +67,7 @@ export async function throwNotFoundOrPermissionError(key: string) {
 async function updateWorkspaceInternal(
   key: string,
   update: UpdateFilter<DbSchema["workspaces"]>,
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   const collection = await getCollection("workspaces");
@@ -86,7 +86,7 @@ export async function updateWorkspace(
     admins,
     users,
   }: { key: string; title?: string; iconUrl?: string; about?: string; admins?: string[]; users?: string[] },
-  params: { context: Context }
+  params: RpcServerParams
 ) {
   const userAccountId = params.context.user?.sub || "";
   if (admins) {
@@ -118,7 +118,7 @@ export async function updateWorkspace(
   return result;
 }
 
-export async function deleteWorkspace({ key }: { key: string }, { context: { user } }: { context: Context }) {
+export async function deleteWorkspace({ key }: { key: string }, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   const workflowCollection = await getCollection("workflows");
   if ((await workflowCollection.countDocuments({ workspaceKey: key }, { limit: 1 })) > 0) {
@@ -133,7 +133,7 @@ export async function deleteWorkspace({ key }: { key: string }, { context: { use
   return { deleted: true };
 }
 
-export async function leaveWorkspace({ key }: { key: string }, { context: { user } }: { context: Context }) {
+export async function leaveWorkspace({ key }: { key: string }, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   const collection = await getCollection("workspaces");
   const result = await collection.findOne({ key });
@@ -165,7 +165,7 @@ export async function leaveWorkspace({ key }: { key: string }, { context: { user
 
 export async function listWorkspaces(
   _,
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ): Promise<(DbSchema["workspaces"] & { token: string })[]> {
   const userAccountId = user?.sub || "";
   const collection = await getCollection("workspaces");
@@ -188,7 +188,7 @@ export async function listWorkspaces(
 
 export async function workspaceAddUser(
   { key, accountId }: { key: string; accountId: string },
-  params: { context: Context }
+  params: RpcServerParams
 ) {
   if (!accountId) {
     throw new InvalidParamsError("accountId is missing");
@@ -211,7 +211,7 @@ export async function workspaceAddUser(
 
 export async function workspaceRemoveUser(
   { key, accountId }: { key: string; accountId: string },
-  params: { context: Context }
+  params: RpcServerParams
 ) {
   if (!accountId) {
     throw new InvalidParamsError("accountId is missing");
@@ -234,7 +234,7 @@ export async function workspaceRemoveUser(
 
 export async function workspaceAddAdmin(
   { key, accountId }: { key: string; accountId: string },
-  params: { context: Context }
+  params: RpcServerParams
 ) {
   if (!accountId) {
     throw new InvalidParamsError("accountId is missing");
@@ -257,7 +257,7 @@ export async function workspaceAddAdmin(
 
 export async function workspaceRemoveAdmin(
   { key, accountId }: { key: string; accountId: string },
-  params: { context: Context }
+  params: RpcServerParams
 ) {
   if (!accountId) {
     throw new InvalidParamsError("accountId is missing");

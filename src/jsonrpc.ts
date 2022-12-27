@@ -38,10 +38,12 @@ export type Context = {
   user?: TAccessToken;
 };
 
+export type RpcServerParams = ServerParams<Context>;
+
 const authMiddleware = async (
-  next: JSONRPCServerMiddlewareNext<ServerParams>,
+  next: JSONRPCServerMiddlewareNext<RpcServerParams>,
   request: JSONRPCRequest,
-  serverParams: ServerParams<Context> | undefined
+  serverParams: RpcServerParams | undefined
 ) => {
   let token = "";
   if (serverParams?.req) {
@@ -75,7 +77,8 @@ async function authenticate() {
 export function createServer() {
   const server = createJsonRpcServer<Context>();
   server.applyMiddleware(authMiddleware);
-  const methods = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const methods: Record<string, (params: any, extra: RpcServerParams) => Promise<unknown>> = {
     authenticate, // For WebSocket only
 
     createWorkflow,
@@ -107,10 +110,7 @@ export function createServer() {
     updateAuthCredentials,
     deleteAuthCredentials,
   };
-  for (const [name, func] of Object.entries(methods) as [
-    string,
-    (params: unknown, extra: ServerParams) => Promise<unknown>
-  ][]) {
+  for (const [name, func] of Object.entries(methods)) {
     server.addMethod("or_" + name, forceObject(func));
     server.addMethod(name, forceObject(func));
   }

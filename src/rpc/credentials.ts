@@ -1,4 +1,4 @@
-import { Context } from "../jsonrpc";
+import { RpcServerParams } from "../jsonrpc";
 import { callCredentialManager } from "../credentialManagerClient";
 import { AccessToken } from "../jwt";
 import { assert } from "console";
@@ -11,7 +11,7 @@ export async function listAuthCredentials(
     connectorId: string;
     environment: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   assert(user);
   return await callCredentialManager(
@@ -30,7 +30,7 @@ export async function updateAuthCredentials(
     key: string;
     displayName: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   assert(user);
   return await callCredentialManager(
@@ -47,7 +47,7 @@ export async function deleteAuthCredentials(
   }: {
     key: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   assert(user);
   return await callCredentialManager(
@@ -68,7 +68,7 @@ export async function putConnectorSecrets(
     secrets: { [key: string]: unknown };
     environment: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   if (!user || !("workspace" in user) || user.workspace !== "ADMIN") {
     throw new Error("Only admin can update connector secret");

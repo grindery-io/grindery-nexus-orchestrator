@@ -2,11 +2,11 @@ import { Client as HubSpotClient } from "@hubspot/api-client";
 import axios from "axios";
 import { identify, track } from "../tracking";
 import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
-import { Context } from "../jsonrpc";
+import { RpcServerParams } from "../jsonrpc";
 import { verifyAccountId } from "./orchestrator";
 
 const isAllowedUserCache = new Map<string, boolean | Promise<boolean>>();
-export async function isAllowedUser({ app }: { app?: string }, { context: { user } }: { context: Context }) {
+export async function isAllowedUser({ app }: { app?: string }, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const hsAccessProperties = {
@@ -69,7 +69,7 @@ export async function isAllowedUser({ app }: { app?: string }, { context: { user
 
 export async function requestEarlyAccess(
   { email, source, app }: { email: string; source?: string; app?: string },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -144,7 +144,7 @@ export async function saveWalletAddress(
     email?: string;
     walletAddress: string;
   },
-  { context: { user } }: { context: Context }
+  { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
