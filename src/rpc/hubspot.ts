@@ -31,7 +31,7 @@ export async function isAllowedUser({ app }: { app?: string }, { context: { user
                   value: userAccountId,
                 },
                 {
-                  propertyName: app && hsAccessProperties[app] ? hsAccessProperties[app] : "early_access__auto_",
+                  propertyName: app && hsAccessProperties[app] ? hsAccessProperties[app] : "doi_confirmed__auto_",
                   operator: "EQ",
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   value: true as any,
@@ -188,4 +188,58 @@ export async function saveWalletAddress(
     await hubspotClient.crm.contacts.basicApi.create({ properties: newProps });
   }
   return true;
+}
+
+const isUserHasEmailCache = new Map<string, boolean | Promise<boolean>>();
+export async function isUserHasEmail(_, { context: { user } }: RpcServerParams) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  const userAccount = userAccountId;
+  if (!isUserHasEmailCache.has(userAccount)) {
+    isUserHasEmailCache.set(
+      userAccount,
+      (async () => {
+        const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+        const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "ceramic_did",
+                  operator: "EQ",
+                  value: userAccountId,
+                },
+                {
+                  propertyName: "email",
+                  operator: "HAS_PROPERTY",
+                },
+              ],
+            },
+          ],
+          properties: ["email"],
+          limit: 1,
+          after: 0,
+          sorts: [],
+        });
+        if (resp.results.length) {
+          return true;
+        }
+        return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
+      })().then(
+        (result) => {
+          if (result) {
+            isUserHasEmailCache.set(userAccount, result);
+          } else {
+            isUserHasEmailCache.delete(userAccount);
+          }
+          return result;
+        },
+        (e) => {
+          isUserHasEmailCache.delete(userAccount);
+          return Promise.reject(e);
+        }
+      )
+    );
+  }
+  return await isUserHasEmailCache.get(userAccount);
 }

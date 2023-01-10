@@ -17,7 +17,7 @@ import {
   saveNotificationsState,
   runAction,
 } from "./rpc/orchestrator";
-import { isAllowedUser, requestEarlyAccess, saveWalletAddress } from "./rpc/hubspot";
+import { isAllowedUser, requestEarlyAccess, saveWalletAddress, isUserHasEmail } from "./rpc/hubspot";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
 import assert from "assert";
@@ -95,6 +95,7 @@ export function createServer() {
     saveNotificationsState,
     runAction,
     testTrigger,
+    isUserHasEmail,
 
     createWorkspace,
     updateWorkspace,
