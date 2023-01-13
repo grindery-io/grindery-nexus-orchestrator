@@ -172,16 +172,19 @@ export async function listWorkspaces(
   const result = collection.find({
     $or: [{ admins: { $in: [userAccountId] } }, { users: { $in: [userAccountId] } }],
   });
-  const items = (await result.toArray()).map((x) => ({ ...x, token: "" }));
+  let items = (await result.toArray()).map((x) => ({ ...x, token: "" }));
+  const workspaceRestricted = (user && "workspaceRestricted" in user && user.workspaceRestricted) || undefined;
+  if (workspaceRestricted) {
+    const workspace = user && "workspace" in user ? user.workspace : "";
+    items = items.filter((x) => x.key === workspace);
+  }
   for (const item of items) {
-    if (user && "workspaceRestricted" in user && user.workspaceRestricted && item.key !== user.workspace) {
-      continue;
-    }
     item.token = await AccessToken.sign(
       {
         sub: user?.sub,
         workspace: item.key,
         role: item.admins.includes(userAccountId) ? "admin" : "user",
+        workspaceRestricted,
       },
       user?.exp || "1h"
     );
