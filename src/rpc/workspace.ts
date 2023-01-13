@@ -174,6 +174,9 @@ export async function listWorkspaces(
   });
   const items = (await result.toArray()).map((x) => ({ ...x, token: "" }));
   for (const item of items) {
+    if (user && "workspaceRestricted" in user && user.workspaceRestricted && item.key !== user.workspace) {
+      continue;
+    }
     item.token = await AccessToken.sign(
       {
         sub: user?.sub,

@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import * as jose from "jose";
 import * as ethLib from "eth-lib";
 import base64url from "base64url";
-import { getPublicJwk, RefreshToken, AccessToken, LoginChallenge } from "../jwt";
-import { createAsyncRouter, tryRestoreSession } from "./utils";
+import { getPublicJwk, RefreshToken, LoginChallenge, LoginCodeToken, TAccessToken } from "../jwt";
+import { auth, createAccessTokenFromRefreshToken, createAsyncRouter, tryRestoreSession } from "./utils";
 import { tokenResponse, REFRESH_TOKEN_COOKIE } from "./utils";
 import { Router as FlowRouter, grantByFlow } from "./flow";
 
@@ -49,6 +49,19 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   return await tokenResponse(res, subject);
 };
 
+async function grantByLoginCodeToken(res: Response, token: string) {
+  if (!token) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Missing token" });
+  }
+  try {
+    const result = await LoginCodeToken.decrypt(token);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return await tokenResponse(res, result.sub!, result);
+  } catch (e) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Invalid or expired token" });
+  }
+}
+
 const GRANT_MODES = {
   "urn:grindery:eth-signature": async (req: Request, res: Response) => {
     const message = req.body?.message || "";
@@ -65,6 +78,9 @@ const GRANT_MODES = {
     if (decodedParams.type === "flow") {
       return await grantByFlow(res, decodedParams);
     }
+    if (decodedParams.type === "loginCodeToken") {
+      return await grantByLoginCodeToken(res, decodedParams.token);
+    }
     const message = decodedParams?.message || "";
     const signature = decodedParams?.signature || "";
     return await grantByEthSignature(res, message, signature);
@@ -77,7 +93,7 @@ const GRANT_MODES = {
     try {
       const result = await RefreshToken.decrypt(token);
       return res.json({
-        access_token: await AccessToken.sign({ sub: result.sub }, "3600s"),
+        access_token: await createAccessTokenFromRefreshToken(result),
         token_type: "bearer",
         expires_in: 3600,
       });
@@ -121,6 +137,29 @@ router.get("/eth-get-message", async (req, res) => {
   return res.json({
     message: `Signing in on Grindery: ${token}`,
     expires_in: 300,
+  });
+});
+router.post("/get-login-code", auth, async (req, res) => {
+  const user = req["user"] as TAccessToken;
+  if (!user) {
+    return res.status(400).json({ error: "invalid_request", error_description: "Invalid token" });
+  }
+  if ("workspace" in user && user.workspaceRestricted) {
+    return res.status(400).json({
+      error: "invalid_request",
+      error_description: "Workspace-restricted token can't be used to exchange login code",
+    });
+  }
+  return res.json({
+    code: base64url.encode(
+      JSON.stringify({
+        type: "loginCodeToken",
+        token: await LoginCodeToken.encrypt(
+          { sub: user.sub, ...("workspace" in user ? { workspace: user.workspace, role: user.role } : {}) },
+          "60s"
+        ),
+      })
+    ),
   });
 });
 router.get("/session", async (req, res) => {

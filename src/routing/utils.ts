@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AsyncRouter } from "express-async-router";
-import { AccessToken, RefreshToken, TAccessToken } from "../jwt";
+import { AccessToken, RefreshToken, TAccessToken, RefreshTokenExtra, TRefreshToken } from "../jwt";
 
 export function createAsyncRouter() {
   return AsyncRouter({
@@ -16,9 +16,20 @@ export function createAsyncRouter() {
   });
 }
 
+export async function createAccessTokenFromRefreshToken(token: TRefreshToken) {
+  return await AccessToken.sign(
+    {
+      sub: token.sub,
+      ...(token.workspace ? { workspace: token.workspace, workspaceRestricted: true, role: token.role || "user" } : {}),
+    },
+    "3600s"
+  );
+}
+
 export const REFRESH_TOKEN_COOKIE = "grinderyNexusRefreshToken";
-export async function tokenResponse(res: Response, subject: string) {
-  const refreshToken = await RefreshToken.encrypt({ sub: subject }, "1000y");
+export async function tokenResponse(res: Response, subject: string, extra: RefreshTokenExtra = {}) {
+  const refreshTokenData: TRefreshToken = { sub: subject, workspace: extra.workspace, role: extra.role };
+  const refreshToken = await RefreshToken.encrypt(refreshTokenData, "1000y");
   res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, {
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 365,
@@ -26,7 +37,7 @@ export async function tokenResponse(res: Response, subject: string) {
     secure: true,
   });
   return res.json({
-    access_token: await AccessToken.sign({ sub: subject }, "3600s"),
+    access_token: await createAccessTokenFromRefreshToken(refreshTokenData),
     token_type: "bearer",
     expires_in: 3600,
     refresh_token: refreshToken,
