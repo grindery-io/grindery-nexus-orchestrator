@@ -10,6 +10,7 @@ import { getWorkflowEnvironment } from "../utils";
 import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { RpcServerParams } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
+import { deleteUserFromCache } from "./hubspot";
 
 export function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -294,6 +295,8 @@ export async function deleteWorkflow({ key }: { key: string }, { context: { user
     key,
   });
   stopWorkflow(key);
+  const workflowExecutionCollection = await getCollection("workflowExecutions");
+  await workflowExecutionCollection.deleteMany({ workflowKey: key });
   let source: string | undefined;
   try {
     source = (JSON.parse(workflow.workflow) as WorkflowSchema).source;
@@ -307,6 +310,68 @@ export async function deleteWorkflow({ key }: { key: string }, { context: { user
     source: source || "unknown",
   });
   return { deleted: result.deletedCount === 1 };
+}
+
+export async function deleteUser(_, { context: { user } }: RpcServerParams) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  const workflowCollection = await getCollection("workflows");
+  let workflows = await workflowCollection
+    .find({
+      userAccountId,
+      workspaceKey: { $in: [undefined, ""] },
+    })
+    .toArray();
+  const workspaceCollection = await getCollection("workspaces");
+  const workspaces = await workspaceCollection.find({ admins: [userAccountId] }).toArray();
+  for (const workspace of workspaces) {
+    workflows = workflows.concat(
+      await workflowCollection
+        .find({
+          workspaceKey: workspace.key,
+        })
+        .toArray()
+    );
+  }
+  for (const workflow of workflows) {
+    stopWorkflow(workflow.key);
+  }
+  const workflowExecutionCollection = await getCollection("workflowExecutions");
+  await workflowExecutionCollection.deleteMany({ workflowKey: { $in: workflows.map((x) => x.key) } });
+  await workflowCollection.deleteMany({ key: { $in: workflows.map((x) => x.key) } });
+  await workspaceCollection.deleteMany({ key: { $in: workspaces.map((x) => x.key) } });
+  await workspaceCollection.updateMany(
+    {},
+    {
+      $pull: {
+        users: userAccountId,
+        admins: userAccountId,
+      },
+    }
+  );
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          },
+        ],
+      },
+    ],
+    properties: ["email"],
+    limit: 100,
+    after: 0,
+    sorts: [],
+  });
+  deleteUserFromCache(userAccountId);
+  if (resp.results.length > 0) {
+    await hubspotClient.crm.contacts.batchApi.archive({ inputs: resp.results.map((x) => ({ id: x.id })) });
+  }
+  track(userAccountId, "Delete User", {});
 }
 
 export async function testAction(

@@ -243,3 +243,7 @@ export async function isUserHasEmail(_, { context: { user } }: RpcServerParams) 
   }
   return await isUserHasEmailCache.get(userAccount);
 }
+export function deleteUserFromCache(userAccountId: string) {
+  isAllowedUserCache.delete(userAccountId);
+  isUserHasEmailCache.delete(userAccountId);
+}
