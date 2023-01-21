@@ -16,6 +16,7 @@ import {
   moveWorkflowToWorkspace,
   saveNotificationsState,
   runAction,
+  deleteUser,
 } from "./rpc/orchestrator";
 import { isAllowedUser, requestEarlyAccess, saveWalletAddress, isUserHasEmail } from "./rpc/hubspot";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
@@ -96,6 +97,7 @@ export function createServer() {
     runAction,
     testTrigger,
     isUserHasEmail,
+    deleteUser,
 
     createWorkspace,
     updateWorkspace,
