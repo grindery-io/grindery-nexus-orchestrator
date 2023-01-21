@@ -386,6 +386,7 @@ export async function deleteUser(_, { context: { user } }: RpcServerParams) {
     await hubspotClient.crm.contacts.batchApi.archive({ inputs: resp.results.map((x) => ({ id: x.id })) });
   }
   track(userAccountId, "Delete User", {});
+  return true;
 }
 
 export async function testAction(
