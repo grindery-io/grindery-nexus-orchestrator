@@ -11,6 +11,7 @@ import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { RpcServerParams } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
 import { deleteUserFromCache } from "./hubspot";
+import { deleteAllAuthCredentials } from "./credentials";
 
 export function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -315,6 +316,15 @@ export async function deleteWorkflow({ key }: { key: string }, { context: { user
 export async function deleteUser(_, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
+  if (user && "workspace" in user) {
+    if (user.workspaceRestricted) {
+      throw new Error("Can't delete user with restricted token");
+    }
+    user = { ...user };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (user as any).workspace;
+  }
+
   const workflowCollection = await getCollection("workflows");
   let workflows = await workflowCollection
     .find({
@@ -349,6 +359,10 @@ export async function deleteUser(_, { context: { user } }: RpcServerParams) {
       },
     }
   );
+  await deleteAllAuthCredentials({}, { context: { user } });
+  for (const workspace of workspaces) {
+    await deleteAllAuthCredentials({}, { context: { user: { ...user, workspace: workspace.key, role: "admin" } } });
+  }
   const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
   const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
     filterGroups: [

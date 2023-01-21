@@ -57,6 +57,15 @@ export async function deleteAuthCredentials(
     await AccessToken.sign(user!, "60s")
   );
 }
+export async function deleteAllAuthCredentials(_, { context: { user } }: RpcServerParams) {
+  assert(user);
+  return await callCredentialManager(
+    "deleteAllAuthCredentials",
+    {},
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await AccessToken.sign(user!, "60s")
+  );
+}
 
 export async function putConnectorSecrets(
   {
