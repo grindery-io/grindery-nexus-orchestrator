@@ -190,7 +190,7 @@ export async function saveWalletAddress(
   return true;
 }
 
-const isUserHasEmailCache = new Map<string, boolean | Promise<boolean | string | undefined> | string>();
+const isUserHasEmailCache = new Map<string, boolean | Promise<boolean>>();
 export async function isUserHasEmail(_, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -222,8 +222,9 @@ export async function isUserHasEmail(_, { context: { user } }: RpcServerParams) 
           sorts: [],
         });
         if (resp.results.length) {
-          return resp.results[0]?.properties?.email || false;
+          return true;
         }
+        return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
       })().then(
         (result) => {
           if (result) {
@@ -293,4 +294,31 @@ export async function updateUserEmail(
   } else {
     return false;
   }
+}
+
+export async function getUserEmail(
+  _,
+  { context: { user } }: RpcServerParams
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          }
+        ],
+      },
+    ],
+    properties: ["email"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  return resp.results?.[0]?.properties?.email || null;
 }

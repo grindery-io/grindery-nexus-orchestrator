@@ -18,7 +18,14 @@ import {
   runAction,
   deleteUser,
 } from "./rpc/orchestrator";
-import { isAllowedUser, requestEarlyAccess, saveWalletAddress, isUserHasEmail, updateUserEmail } from "./rpc/hubspot";
+import { 
+  isAllowedUser, 
+  requestEarlyAccess, 
+  saveWalletAddress, 
+  isUserHasEmail, 
+  updateUserEmail, 
+  getUserEmail 
+} from "./rpc/hubspot";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
 import assert from "assert";
@@ -99,6 +106,7 @@ export function createServer() {
     isUserHasEmail,
     deleteUser,
     updateUserEmail,
+    getUserEmail,
 
     createWorkspace,
     updateWorkspace,
