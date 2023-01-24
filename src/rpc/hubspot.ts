@@ -190,7 +190,7 @@ export async function saveWalletAddress(
   return true;
 }
 
-const isUserHasEmailCache = new Map<string, boolean | Promise<boolean>>();
+const isUserHasEmailCache = new Map<string, boolean | Promise<boolean> | string | Promise<string>>();
 export async function isUserHasEmail(_, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
@@ -222,7 +222,7 @@ export async function isUserHasEmail(_, { context: { user } }: RpcServerParams) 
           sorts: [],
         });
         if (resp.results.length) {
-          return resp.results[0].properties.email;
+          return resp.results[0].properties?.email || false;
         }
       })().then(
         (result) => {
