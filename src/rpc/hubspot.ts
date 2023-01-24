@@ -249,7 +249,7 @@ export function deleteUserFromCache(userAccountId: string) {
 }
 
 export async function updateUserEmail(
-  {email}: {email: string;},
+  { email }: { email: string; },
   { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
@@ -282,15 +282,15 @@ export async function updateUserEmail(
   if (resp.results.length) {
     contact = resp.results[0]
   }
-  if(!contact){
+  if (!contact) {
     return false;
   }
   const resp = await hubspotClient.crm.contacts.basicApi.update(contact.id, {
-    properties: {email}
+    properties: { email }
   })
-  if(resp && resp.id){
+  if (resp && resp.id) {
     track(userAccountId, "Email updated", { email });
-  return true;  
+    return true;
   } else {
     return false
   }
