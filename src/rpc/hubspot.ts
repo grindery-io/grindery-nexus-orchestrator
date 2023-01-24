@@ -280,18 +280,18 @@ export async function updateUserEmail(
     sorts: [],
   });
   if (resp.results.length) {
-    contact = resp.results[0]
+    contact = resp.results[0];
   }
   if (!contact) {
     return false;
   }
-  const resp = await hubspotClient.crm.contacts.basicApi.update(contact.id, {
+  const updateRes = await hubspotClient.crm.contacts.basicApi.update(contact.id, {
     properties: { email }
-  })
-  if (resp && resp.id) {
+  });
+  if (updateRes && updateRes.id) {
     track(userAccountId, "Email updated", { email });
     return true;
   } else {
-    return false
+    return false;
   }
 }
