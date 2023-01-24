@@ -247,3 +247,51 @@ export function deleteUserFromCache(userAccountId: string) {
   isAllowedUserCache.delete(userAccountId);
   isUserHasEmailCache.delete(userAccountId);
 }
+
+export async function updateUserEmail(
+  {email}: {email: string;},
+  { context: { user } }: RpcServerParams
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  if (!email) {
+    throw new InvalidParamsError("Missing email");
+  }
+  if (!/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email)) {
+    throw new InvalidParamsError("Invalid email");
+  }
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  let contact;
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          }
+        ],
+      },
+    ],
+    properties: ["email"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  if (resp.results.length) {
+    contact = resp.results[0]
+  }
+  if(!contact){
+    return false;
+  }
+  const resp = await hubspotClient.crm.contacts.basicApi.update(contact.id, {
+    properties: {email}
+  })
+  if(resp && resp.id){
+    track(userAccountId, "Email updated", { email });
+  return true;  
+  } else {
+    return false
+  }
+}
