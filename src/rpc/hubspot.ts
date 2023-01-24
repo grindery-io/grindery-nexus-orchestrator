@@ -222,9 +222,8 @@ export async function isUserHasEmail(_, { context: { user } }: RpcServerParams) 
           sorts: [],
         });
         if (resp.results.length) {
-          return true;
+          return resp.results[0].properties.email;
         }
-        return (process.env.ALLOWED_USERS || "").split(",").includes(userAccountId);
       })().then(
         (result) => {
           if (result) {
