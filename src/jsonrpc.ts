@@ -18,13 +18,13 @@ import {
   runAction,
   deleteUser,
 } from "./rpc/orchestrator";
-import { 
-  isAllowedUser, 
-  requestEarlyAccess, 
-  saveWalletAddress, 
-  isUserHasEmail, 
-  updateUserEmail, 
-  getUserEmail 
+import {
+  isAllowedUser,
+  requestEarlyAccess,
+  saveWalletAddress,
+  isUserHasEmail,
+  updateUserEmail,
+  getUserEmail
 } from "./rpc/hubspot";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
