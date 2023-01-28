@@ -438,13 +438,23 @@ export async function testTrigger(
   );
   connection.on("close", () => triggerInstance.stop());
   connection.on("error", () => triggerInstance.stop());
-  triggerInstance.on("signal", (output) =>
-    connection.send({
-      jsonrpc: "2.0",
-      method: "notifySignal",
-      params: { key: trigger.operation, payload: output.payload },
-    })
-  );
+  triggerInstance.on("signal", (output) => {
+    if (!connection.isOpen()) {
+      triggerInstance.stop();
+      return;
+    }
+    try {
+      connection.send({
+        jsonrpc: "2.0",
+        method: "notifySignal",
+        params: { key: trigger.operation, payload: output.payload },
+      });
+    } catch (e) {
+      console.error("Failed to send signal notification to client", e);
+      connection.close();
+      triggerInstance.stop();
+    }
+  });
   await triggerInstance.start();
   if (!connection.isOpen()) {
     triggerInstance.stop();
