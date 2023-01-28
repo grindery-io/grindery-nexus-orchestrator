@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as Sentry from "@sentry/node";
 import { getCollection } from "../db";
 import { WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
-import { ConnectorInput, ConnectorOutput, JsonRpcWebSocket } from "grindery-nexus-common-utils";
+import { ConnectorInput, ConnectorOutput, getAdaptiveConnection, IJsonRpcClient } from "grindery-nexus-common-utils";
 import { createDebug } from "../debug";
 import { getConnectorSchema } from "grindery-nexus-common-utils";
 import { track as _track } from "../tracking";
@@ -18,7 +18,7 @@ export const debug = createDebug("runtimeWorkflow");
 
 abstract class RuntimeWorkflowBase {
   protected running = false;
-  protected triggerSocket: JsonRpcWebSocket | null = null;
+  protected triggerSocket: IJsonRpcClient | null = null;
   protected startCount = 0;
   protected version = 0;
   protected keepAliveRunning = false;
@@ -179,7 +179,7 @@ abstract class RuntimeWorkflowBase {
         throw new Error(`Unsupported polling URL: ${url}`);
       }
       console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
-      const triggerSocket = new JsonRpcWebSocket(url);
+      const triggerSocket = await getAdaptiveConnection(url);
       triggerSocket.once("close", (code, reason) => {
         console.log(`[${this.key}] WebSocket closed (${code} - ${reason})`);
         if (triggerSocket !== this.triggerSocket) {

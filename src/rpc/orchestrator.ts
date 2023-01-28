@@ -439,7 +439,7 @@ export async function testTrigger(
   connection.on("close", () => triggerInstance.stop());
   connection.on("error", () => triggerInstance.stop());
   triggerInstance.on("signal", (output) => {
-    if (!connection.isOpen()) {
+    if (!connection.isOpen) {
       triggerInstance.stop();
       return;
     }
@@ -456,7 +456,7 @@ export async function testTrigger(
     }
   });
   await triggerInstance.start();
-  if (!connection.isOpen()) {
+  if (!connection.isOpen) {
     triggerInstance.stop();
   }
 }
