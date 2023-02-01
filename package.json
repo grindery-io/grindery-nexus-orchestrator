@@ -22,7 +22,7 @@
   "dependencies": {
     "@hubspot/api-client": "^7.0.1",
     "@onflow/fcl": "^1.2.1",
-    "@sentry/node": "^6.17.8",
+    "@sentry/node": "^7.34.0",
     "@tradle/key-encoder": "^2.1.1",
     "analytics-node": "^6.2.0",
     "axios": "^0.27.2",
@@ -36,7 +36,7 @@
     "eth-lib": "^0.1.29",
     "express": "^4.17.3",
     "express-async-router": "^0.1.15",
-    "grindery-nexus-common-utils": "^2.0.6",
+    "grindery-nexus-common-utils": "^2.0.11",
     "jose": "^4.9.0",
     "json-rpc-2.0": "^1.4.1",
     "lodash": "^4.17.21",
