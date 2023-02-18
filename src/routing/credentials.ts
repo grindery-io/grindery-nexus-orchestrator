@@ -105,6 +105,7 @@ router.get("/auth/callback", async (req, res) => {
   }
   return res.redirect(url.toString());
 });
+const authCompleteCache = new Map<string, unknown>();
 router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken }, res) => {
   assert(req.user);
   if (!req.body?.code) {
@@ -120,19 +121,30 @@ router.post("/auth/complete", auth, async (req: Request & { user?: TAccessToken 
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid code" });
   }
   const { connectorId, environment, code } = decryptedState;
+  const cacheKey = [connectorId, environment, code, req.user.sub].join("|");
+  if (!authCompleteCache.has(cacheKey)) {
+    authCompleteCache.set(
+      cacheKey,
+      callCredentialManager(
+        "completeConnectorAuthorization",
+        {
+          connectorId,
+          environment,
+          displayName: req.body.displayName,
+          params: { code, redirect_uri: getRedirectUri(req) },
+        },
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        await AccessToken.sign(req.user!, "60s")
+      ).then((result) => {
+        authCompleteCache.set(cacheKey, result);
+        return result;
+      })
+    );
+    setTimeout(() => authCompleteCache.delete(cacheKey), 1000 * 60 * 60).unref();
+  }
   let result;
   try {
-    result = await callCredentialManager(
-      "completeConnectorAuthorization",
-      {
-        connectorId,
-        environment,
-        displayName: req.body.displayName,
-        params: { code, redirect_uri: getRedirectUri(req) },
-      },
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await AccessToken.sign(req.user!, "60s")
-    );
+    result = await authCompleteCache.get(cacheKey);
   } catch (e) {
     console.error("Failed to complete authentication flow:", e);
     return res
