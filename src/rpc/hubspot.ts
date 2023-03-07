@@ -358,10 +358,10 @@ export async function updateUserProps(
 ) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  if (!email) {
+  if (!props.email) {
     throw new InvalidParamsError("Missing email");
   }
-  if (!/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email)) {
+  if (!/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(props.email)) {
     throw new InvalidParamsError("Invalid email");
   }
   const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
