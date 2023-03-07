@@ -68,7 +68,7 @@ export async function isAllowedUser({ app }: { app?: string }, { context: { user
 }
 
 export async function requestEarlyAccess(
-  { email, source, app }: { email: string; source?: string; app?: string },
+  { email, source, app, interest, skill }: { email: string; source?: string; app?: string, interest?: string; skill?: string; },
   { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
@@ -112,6 +112,8 @@ export async function requestEarlyAccess(
           value: access_status.length > 0 ? access_status.join(";") : "",
         },
         { name: "early_access_requested_from", value: source || "" },
+        { name: "interest", value: interest || "" },
+        { name: "skill", value: skill || "" },
       ],
       context: {
         pageUri: source || "",
@@ -321,4 +323,79 @@ export async function getUserEmail(
     sorts: [],
   });
   return resp.results?.[0]?.properties?.email || null;
+}
+
+export async function getUserProps(
+  _,
+  { context: { user } }: RpcServerParams
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          }
+        ],
+      },
+    ],
+    properties: ["email", "firstname", "lastname", "interest", "skill"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  return resp.results?.[0]?.properties || null;
+}
+
+export async function updateUserProps(
+  { props }: { props: { email?: string; firstname?: string; lastname?: string; interest?: string; skill?: string; }; },
+  { context: { user } }: RpcServerParams
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  if (!email) {
+    throw new InvalidParamsError("Missing email");
+  }
+  if (!/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(email)) {
+    throw new InvalidParamsError("Invalid email");
+  }
+  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
+  let contact;
+  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
+    filterGroups: [
+      {
+        filters: [
+          {
+            propertyName: "ceramic_did",
+            operator: "EQ",
+            value: userAccountId,
+          }
+        ],
+      },
+    ],
+    properties: ["email"],
+    limit: 1,
+    after: 0,
+    sorts: [],
+  });
+  if (resp.results.length) {
+    contact = resp.results[0];
+  }
+  if (!contact) {
+    return false;
+  }
+  const updateRes = await hubspotClient.crm.contacts.basicApi.update(contact.id, {
+    properties: props
+  });
+  if (updateRes && updateRes.id) {
+    track(userAccountId, "Properties updated", props);
+    return true;
+  } else {
+    return false;
+  }
 }

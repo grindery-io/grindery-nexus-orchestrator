@@ -24,7 +24,9 @@ import {
   saveWalletAddress,
   isUserHasEmail,
   updateUserEmail,
-  getUserEmail
+  getUserEmail,
+  getUserProps,
+  updateUserProps
 } from "./rpc/hubspot";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
@@ -107,6 +109,8 @@ export function createServer() {
     deleteUser,
     updateUserEmail,
     getUserEmail,
+    getUserProps,
+    updateUserProps,
 
     createWorkspace,
     updateWorkspace,
