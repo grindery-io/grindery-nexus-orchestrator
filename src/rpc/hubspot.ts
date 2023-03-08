@@ -68,7 +68,7 @@ export async function isAllowedUser({ app }: { app?: string }, { context: { user
 }
 
 export async function requestEarlyAccess(
-  { email, source, app, interest, skill }: { email: string; source?: string; app?: string, interest?: string; skill?: string; },
+  { email, source, app, interest, skill, firstname, lastname }: { email: string; source?: string; app?: string, interest?: string; skill?: string; firstname?: string; lastname?: string; },
   { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
@@ -107,13 +107,15 @@ export async function requestEarlyAccess(
       fields: [
         { name: "email", value: email },
         { name: "ceramic_did", value: userAccountId },
+        { name: "firstname", value: firstname || "" },
+        { name: "lastname", value: lastname || "" },
+        { name: "interest", value: interest || "" },
+        { name: "skill", value: skill || "" },
         {
           name: "access_status",
           value: access_status.length > 0 ? access_status.join(";") : "",
         },
         { name: "early_access_requested_from", value: source || "" },
-        { name: "interest", value: interest || "" },
-        { name: "skill", value: skill || "" },
       ],
       context: {
         pageUri: source || "",
