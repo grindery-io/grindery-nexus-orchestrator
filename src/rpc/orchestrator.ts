@@ -12,6 +12,7 @@ import { RpcServerParams } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
 import { deleteUserFromCache } from "./hubspot";
 import { deleteAllAuthCredentials } from "./credentials";
+import axios from "axios";
 
 export function verifyAccountId(accountId: string) {
   // Reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-10.md
@@ -527,4 +528,36 @@ export async function runAction(
   verifyAccountId(userAccountId);
   track(userAccountId, "Run Single Action", { connector: step.connector, action: step.operation, environment });
   return await runSingleAction({ step, input, dryRun: false, environment: environment || "production", user });
+}
+
+export async function runActionAsync(
+  {
+    callbackUrl,
+    ...args
+  }: {
+    callbackUrl: string;
+  } & Parameters<typeof runAction>[0],
+  serverParams: RpcServerParams
+) {
+  runAction(args, serverParams)
+    .then(
+      (result) => {
+        return axios.post(callbackUrl, {
+          success: true,
+          result,
+        });
+      },
+      (e) => {
+        return axios.post(callbackUrl, {
+          success: false,
+          error: e?.response?.data || e?.toString() || "Unknown error",
+        });
+      }
+    )
+    .catch((e) => {
+      console.warn("runActionAsync: Failed to call webhook:", e);
+    });
+  return {
+    started: true,
+  };
 }

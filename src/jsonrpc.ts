@@ -17,6 +17,7 @@ import {
   saveNotificationsState,
   runAction,
   deleteUser,
+  runActionAsync,
 } from "./rpc/orchestrator";
 import {
   isAllowedUser,
@@ -26,7 +27,7 @@ import {
   updateUserEmail,
   getUserEmail,
   getUserProps,
-  updateUserProps
+  updateUserProps,
 } from "./rpc/hubspot";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
@@ -104,6 +105,7 @@ export function createServer() {
     saveWalletAddress,
     saveNotificationsState,
     runAction,
+    runActionAsync,
     testTrigger,
     isUserHasEmail,
     deleteUser,
