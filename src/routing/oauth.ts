@@ -122,7 +122,7 @@ router.get("/authorize", async (req, res) => {
       return res.status(400).json({ error: "invalid_request" });
     }
   }
-  const url = new URL("https://nexus.grindery.org/sign-in");
+  const url = new URL(`https://${process.env.AUTH_FRONTEND_DOMAIN || "flow.grindery.org"}/sign-in`);
   for (const key of Object.keys(req.query)) {
     url.searchParams.set(key, String(req.query[key]));
   }
