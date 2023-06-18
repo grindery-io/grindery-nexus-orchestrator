@@ -26,6 +26,7 @@ export async function runAction({
 }) {
   let operationKey = step.operation;
   let actionOp = action.operation;
+  const cdsName = step.connector;
   if (actionOp.type === "blockchain:call") {
     const web3Connector = await getConnectorSchema("web3", environment);
     if (!web3Connector) {
@@ -61,6 +62,7 @@ export async function runAction({
       const requestBody = {
         key: operationKey,
         sessionId,
+        cdsName,
         executionId,
         credentials: step.credentials,
         authentication: step.authentication,

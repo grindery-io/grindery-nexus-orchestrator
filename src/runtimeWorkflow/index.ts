@@ -144,10 +144,11 @@ abstract class RuntimeWorkflowBase {
       return;
     }
     const currentStartCount = this.startCount;
-    const triggerConnector = await getConnectorSchema(this.workflow.trigger.connector, this.environment);
+    const cdsName = this.workflow.trigger.connector;
+    const triggerConnector = await getConnectorSchema(cdsName, this.environment);
     let trigger = triggerConnector.triggers?.find((trigger) => trigger.key === this.workflow.trigger.operation);
     if (!trigger) {
-      throw new Error(`Trigger not found: ${this.workflow.trigger.connector}/${this.workflow.trigger.operation}`);
+      throw new Error(`Trigger not found: ${cdsName}/${this.workflow.trigger.operation}`);
     }
     let fields = sanitizeInput(this.workflow.trigger.input, trigger.operation.inputFields || []);
     if (trigger.operation.type === "blockchain:event") {
@@ -203,6 +204,7 @@ abstract class RuntimeWorkflowBase {
         const requestBody = {
           key: trigger.key,
           sessionId,
+          cdsName,
           credentials: this.workflow.trigger.credentials,
           authentication: this.workflow.trigger.authentication,
           fields,

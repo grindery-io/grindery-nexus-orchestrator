@@ -51,8 +51,9 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
   }
+  const cdsName = req.params.connector;
   const schema: ConnectorSchema | null = await getConnectorSchema(
-    req.params.connector,
+    cdsName,
     String(req.query?._grinderyEnvironment || "production")
   ).catch(() => null);
   if (!schema) {
@@ -83,6 +84,7 @@ router.all("/webhook/:connector/:key/:path?", async (req, res) => {
     const resp = (await socket.request<ConnectorInput>("callWebhook", {
       key: req.params.key,
       sessionId: uuidv4(),
+      cdsName,
       fields: {
         method: req.method.toUpperCase(),
         path: req.params.path,
