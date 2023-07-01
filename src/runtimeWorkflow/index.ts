@@ -53,14 +53,14 @@ abstract class RuntimeWorkflowBase {
     if (this.keepAliveRunning) {
       return;
     }
-    if (!this.running) {
+    if (!this.running || !this.triggerSocket) {
       return;
     }
     this.keepAliveRunning = true;
     const keepAliveInterval = parseInt(process.env.KEEPALIVE_INTERVAL || "", 10) || 60000;
     try {
       for (;;) {
-        if (!this.running) {
+        if (!this.running || !this.triggerSocket) {
           return;
         }
         await new Promise((res) => setTimeout(res, keepAliveInterval * 0.9 + Math.random() * keepAliveInterval * 0.2));
@@ -142,6 +142,12 @@ abstract class RuntimeWorkflowBase {
     const wait = 100 * Math.pow(2, this.startCount) + Math.random() * 1000;
     if (this.startCount > 1) {
       console.log(`[${this.key}] Retrying after ${Math.floor(wait / 1000)}s`);
+      try {
+        this.triggerSocket?.close();
+      } catch (e) {
+        // Ignore
+      }
+      this.triggerSocket = null;
     }
     await new Promise((resolve) => setTimeout(resolve, wait));
     if (!this.running || this.version !== currentVersion) {
