@@ -74,7 +74,9 @@ const grantByEip1271Signature = async (res: Response, params: Parameters<typeof 
     if (!m) {
       throw new Error("Unexpected subject");
     }
-    if (!validateEip1271Signature({ messageHash, signature, chainId: m[1], signer: m[2], environment: "staging" })) {
+    if (
+      !(await validateEip1271Signature({ messageHash, signature, chainId: m[1], signer: m[2], environment: "staging" }))
+    ) {
       throw new Error("Invalid signature");
     }
     return token.sub || "";
