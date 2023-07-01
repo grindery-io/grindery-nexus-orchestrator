@@ -70,7 +70,7 @@ const grantByEthSignature = async (res: Response, params: Parameters<typeof gran
 
 const grantByEip1271Signature = async (res: Response, params: Parameters<typeof grantByEthSignatureCore>[1]) => {
   return await grantByEthSignatureCore(res, params, async ({ messageHash, signature, token }) => {
-    const m = /^eip155:(\d+):(0x[0-9a-f]{40})$/.exec(token.sub || "");
+    const m = /^eip155:(\d+):(0x[0-9a-f]{40})$/i.exec(token.sub || "");
     if (!m) {
       throw new Error("Unexpected subject");
     }
