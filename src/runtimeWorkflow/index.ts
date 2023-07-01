@@ -32,6 +32,9 @@ abstract class RuntimeWorkflowBase {
     protected workspace: string | undefined
   ) {}
   async start() {
+    if (this.running) {
+      return;
+    }
     this.running = true;
     this.version++;
     this.startCount = 0;
