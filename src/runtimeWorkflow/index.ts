@@ -132,6 +132,7 @@ abstract class RuntimeWorkflowBase {
         endedAt: Date.now(),
       });
       this.track(this.accountId, "Workflow Halted After Too Many Trigger Failures", { workflow: this.key });
+      this.stop();
       return;
     }
     this.startCount++;
