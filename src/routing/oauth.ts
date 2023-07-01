@@ -53,7 +53,6 @@ const grantByEthSignatureCore = async (
         .json({ error: "invalid_request", error_description: "Signature is not from correct wallet" });
     }
   } catch (e) {
-    console.warn("grantByEthSignatureCore:", e);
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid signature" });
   }
   const subject = decryptResult.sub;
