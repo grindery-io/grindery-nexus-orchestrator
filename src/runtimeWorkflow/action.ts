@@ -17,7 +17,7 @@ export async function runAction({
 }: {
   action: ActionSchema;
   input: { [key: string]: unknown };
-  step: OperationSchema;
+  step: Omit<OperationSchema, "input">;
   sessionId: string;
   executionId: string;
   dryRun?: boolean;
@@ -86,7 +86,7 @@ export async function runSingleAction({
   environment,
   user,
 }: {
-  step: OperationSchema;
+  step: Omit<OperationSchema, "input">;
   input: unknown;
   dryRun?: boolean;
   environment: string;

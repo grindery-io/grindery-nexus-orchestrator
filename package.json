@@ -34,6 +34,7 @@
     "debug": "^4.3.4",
     "dotenv": "^16.0.0",
     "eth-lib": "^0.1.29",
+    "ethers": "^6.6.2",
     "express": "^4.17.3",
     "express-async-router": "^0.1.15",
     "grindery-nexus-common-utils": "^2.0.15",

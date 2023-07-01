@@ -515,7 +515,7 @@ export async function runAction(
     input,
     environment,
   }: {
-    step: OperationSchema;
+    step: Omit<OperationSchema, "input">;
     input: unknown;
     environment: string;
   },

@@ -6,17 +6,27 @@ import { getPublicJwk, RefreshToken, LoginChallenge, LoginCodeToken, TAccessToke
 import { auth, createAccessTokenFromRefreshToken, createAsyncRouter, tryRestoreSession } from "./utils";
 import { tokenResponse, REFRESH_TOKEN_COOKIE } from "./utils";
 import { Router as FlowRouter, grantByFlow } from "./flow";
+import { validateEip1271Signature } from "./eip1271";
 
 const router = createAsyncRouter();
 
-const grantByEthSignature = async (res: Response, message: string, signature: string) => {
+const grantByEthSignatureCore = async (
+  res: Response,
+  { message, signature, extra }: { message: string; signature: string; extra?: unknown },
+  recoverAddress: (p: {
+    messageHash: string;
+    signature: string;
+    token: jose.JWTPayload;
+    extra?: unknown;
+  }) => Promise<string>
+) => {
   if (!message) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing message" });
   }
   if (!signature) {
     return res.status(400).json({ error: "invalid_request", error_description: "Missing signature" });
   }
-  if (!/^(0x)?[0-9a-f]+$/i.test(signature)) {
+  if (!/^(0x)?[0-9a-f]*$/i.test(signature)) {
     return res.status(400).json({ error: "invalid_request", error_description: "Invalid signature" });
   }
   const m = /: *(.+)$/.exec(message);
@@ -36,8 +46,8 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   const preamble = Buffer.from("\x19Ethereum Signed Message:\n" + messageBuffer.length);
   const messageHash = ethLib.Hash.keccak256(Buffer.concat([preamble, messageBuffer]));
   try {
-    const recoveredAddress = ethLib.Account.recover(messageHash, signature);
-    if ("eip155:1:" + recoveredAddress.toLowerCase() !== decryptResult.sub?.toLowerCase()) {
+    const recoveredAddress = await recoverAddress({ messageHash, signature, token: decryptResult, extra });
+    if (recoveredAddress.toLowerCase() !== decryptResult.sub?.toLowerCase()) {
       return res
         .status(400)
         .json({ error: "invalid_request", error_description: "Signature is not from correct wallet" });
@@ -47,6 +57,27 @@ const grantByEthSignature = async (res: Response, message: string, signature: st
   }
   const subject = decryptResult.sub;
   return await tokenResponse(res, subject);
+};
+
+const grantByEthSignature = async (res: Response, params: Parameters<typeof grantByEthSignatureCore>[1]) => {
+  return await grantByEthSignatureCore(
+    res,
+    params,
+    async ({ messageHash, signature }) => "eip155:1:" + ethLib.Account.recover(messageHash, signature)
+  );
+};
+
+const grantByEip1271Signature = async (res: Response, params: Parameters<typeof grantByEthSignatureCore>[1]) => {
+  return await grantByEthSignatureCore(res, params, async ({ messageHash, signature, token }) => {
+    const m = /^eip155:(\d+):(0x[0-9a-f]{40})$/.exec(token.sub || "");
+    if (!m) {
+      throw new Error("Unexpected subject");
+    }
+    if (!validateEip1271Signature({ messageHash, signature, chainId: m[1], signer: m[2], environment: "staging" })) {
+      throw new Error("Invalid signature");
+    }
+    return token.sub || "";
+  });
 };
 
 async function grantByLoginCodeToken(res: Response, token: string) {
@@ -66,7 +97,7 @@ const GRANT_MODES = {
   "urn:grindery:eth-signature": async (req: Request, res: Response) => {
     const message = req.body?.message || "";
     const signature = req.body?.signature || "";
-    return await grantByEthSignature(res, message, signature);
+    return await grantByEthSignature(res, { message, signature });
   },
   authorization_code: async (req: Request, res: Response) => {
     let decodedParams;
@@ -81,9 +112,10 @@ const GRANT_MODES = {
     if (decodedParams.type === "loginCodeToken") {
       return await grantByLoginCodeToken(res, decodedParams.token);
     }
-    const message = decodedParams?.message || "";
-    const signature = decodedParams?.signature || "";
-    return await grantByEthSignature(res, message, signature);
+    if (decodedParams.type === "eip1271") {
+      return await grantByEip1271Signature(res, decodedParams);
+    }
+    return await grantByEthSignature(res, decodedParams);
   },
   refresh_token: async (req: Request, res: Response) => {
     const token = req.body?.refresh_token;
@@ -164,10 +196,14 @@ router.post("/get-login-code", auth, async (req, res) => {
 });
 router.get("/session", async (req, res) => {
   const address = String(req.query.address || "");
+  const chain = String(req.query.chain || "1");
   if (!/^0x[0-9a-f]{40}$/i.test(address)) {
     return res.status(400).json({ error: "invalid_eth_address" });
   }
-  const subject = "eip155:1:" + address;
+  if (!/^\d+$/i.test(chain)) {
+    return res.status(400).json({ error: "invalid_eth_chain" });
+  }
+  const subject = `eip155:${chain}:${address}`;
   if (await tryRestoreSession(req, res, subject)) {
     return;
   }
