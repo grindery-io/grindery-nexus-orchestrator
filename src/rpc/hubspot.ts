@@ -68,7 +68,7 @@ export async function isAllowedUser({ app }: { app?: string }, { context: { user
 }
 
 export async function requestEarlyAccess(
-  { email, source, app, interest, skill, firstname, lastname }: { email: string; source?: string; app?: string, interest?: string; skill?: string; firstname?: string; lastname?: string; },
+  { email, source, app, interest, skill, firstname, lastname, hutk, pageName, ipAddress }: { email: string; source?: string; app?: string, interest?: string; skill?: string; firstname?: string; lastname?: string; hutk?: string; pageName?: string, ipAddress?: string;},
   { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
@@ -118,7 +118,10 @@ export async function requestEarlyAccess(
         { name: "early_access_requested_from", value: source || "" },
       ],
       context: {
+        hutk: hutk || "",
         pageUri: source || "",
+        pageName: pageName || "", 
+        ipAddress: ipAddress || ""
       },
       legalConsentOptions: {
         consent: {
