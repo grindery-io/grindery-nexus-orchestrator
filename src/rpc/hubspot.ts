@@ -120,7 +120,7 @@ export async function requestEarlyAccess(
       context: {
         hutk: hutk || "",
         pageUri: source || "",
-        pageName: pageName || "", 
+        pageName: pageName || "",
         ipAddress: ipAddress || ""
       },
       legalConsentOptions: {
