@@ -118,10 +118,10 @@ export async function requestEarlyAccess(
         { name: "early_access_requested_from", value: source || "" },
       ],
       context: {
-        hutk: hutk || "",
-        pageUri: source || "",
-        pageName: pageName || "",
-        ipAddress: ipAddress || ""
+        hutk: hutk || undefined,
+        pageUri: source || undefined,
+        pageName: pageName || undefined,
+        ipAddress: ipAddress || undefined
       },
       legalConsentOptions: {
         consent: {
