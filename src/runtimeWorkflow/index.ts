@@ -118,6 +118,16 @@ abstract class RuntimeWorkflowBase {
       this.setupTriggerRunning = false;
     }
   }
+  private retrySetup() {
+    setTimeout(
+      () =>
+        this.setupTrigger().catch((e) => {
+          console.error(`[${this.key}] Unexpected failure:`, e);
+          this.retrySetup();
+        }),
+      1000
+    );
+  }
   private async _setupTrigger() {
     this.version++;
     const currentVersion = this.version;
@@ -189,8 +199,14 @@ abstract class RuntimeWorkflowBase {
       if (!/^wss?:\/\//i.test(url)) {
         throw new Error(`Unsupported polling URL: ${url}`);
       }
+      const triggerSocket = await getAdaptiveConnection(url).catch((e) => {
+        console.error(`[${this.key}] Failed to create WebSocket connection`, e);
+        this.retrySetup();
+      });
+      if (!triggerSocket) {
+        return;
+      }
       console.log(`[${this.key}] Starting polling: ${sessionId} ${url}`);
-      const triggerSocket = await getAdaptiveConnection(url);
       triggerSocket.once("close", (code, reason) => {
         console.log(`[${this.key}] WebSocket closed (${code} - ${reason})`);
         if (triggerSocket !== this.triggerSocket) {
@@ -199,7 +215,7 @@ abstract class RuntimeWorkflowBase {
         if (!this.running) {
           return;
         }
-        setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
+        this.retrySetup();
       });
       if (this.triggerSocket) {
         try {
