@@ -524,6 +524,7 @@ export async function runAction(
   if (!user) {
     throw new Error("user is required");
   }
+  console.log(`runAction: ${step.connector}/${step.operation} (${environment})`);
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   track(userAccountId, "Run Single Action", { connector: step.connector, action: step.operation, environment });
