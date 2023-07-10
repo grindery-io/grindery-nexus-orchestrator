@@ -57,7 +57,7 @@ export async function runAction({
     if (!/^wss?:\/\//i.test(url)) {
       throw new Error(`Unsupported action URL: ${url}`);
     }
-    const socket = new JsonRpcWebSocket(url);
+    const socket = new JsonRpcWebSocket(url, 600 * 1000);
     try {
       const requestBody = {
         key: operationKey,
