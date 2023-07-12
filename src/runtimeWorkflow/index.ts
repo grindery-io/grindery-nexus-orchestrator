@@ -106,7 +106,50 @@ abstract class RuntimeWorkflowBase {
   protected getUser(): TAccessToken {
     return { sub: this.accountId, ...(this.workspace ? { workspace: this.workspace, role: "user" } : {}) };
   }
-
+  private async getState(key: string): Promise<unknown> {
+    if (!key) {
+      throw new Error("Missing key");
+    }
+    if (typeof key !== "string") {
+      throw new Error("key must be a string");
+    }
+    const db = await getCollection("workflowStates");
+    const doc = await db.findOne({ workflowKey: this.key, stepIndex: -1, stateKey: key });
+    if (!doc) {
+      return null;
+    }
+    try {
+      return JSON.parse(doc.value);
+    } catch (e) {
+      console.warn(`[${this.key}] Invalid state ${key}: ${doc.value}`, e);
+    }
+    return null;
+  }
+  private async setState(key: string, value: unknown) {
+    if (!key) {
+      throw new Error("Missing key");
+    }
+    if (typeof key !== "string") {
+      throw new Error("key must be a string");
+    }
+    const db = await getCollection("workflowStates");
+    await db.updateOne(
+      { workflowKey: this.key, stepIndex: -1, stateKey: key },
+      {
+        $set: {
+          workflowKey: this.key,
+          stepIndex: -1,
+          stateKey: key,
+          value: JSON.stringify(value),
+          updatedAt: Date.now(),
+        },
+        $setOnInsert: {
+          createdAt: Date.now(),
+        },
+      },
+      { upsert: true }
+    );
+  }
   async setupTrigger() {
     if (this.setupTriggerRunning) {
       return;
@@ -226,6 +269,16 @@ abstract class RuntimeWorkflowBase {
       }
       this.triggerSocket = triggerSocket;
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
+      this.triggerSocket.addMethod(
+        "getState",
+        async (input: { sessionId: string; key: string } | undefined): Promise<unknown> =>
+          await this.getState(input?.key || "")
+      );
+      this.triggerSocket.addMethod(
+        "setState",
+        async (input: { sessionId: string; key: string; value: unknown } | undefined) =>
+          await this.setState(input?.key || "", input?.value)
+      );
       try {
         const requestBody = {
           key: trigger.key,

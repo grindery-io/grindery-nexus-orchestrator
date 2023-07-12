@@ -23,6 +23,14 @@ export type DbSchema = {
     startedAt: number; // milliseconds since epoch
     endedAt?: number; // milliseconds since epoch
   };
+  workflowStates: {
+    workflowKey: string;
+    stepIndex: number;
+    stateKey: string;
+    value: string; // JSON
+    updatedAt: number; // milliseconds since epoch
+    createdAt: number; // milliseconds since epoch
+  };
   workspaces: {
     key: string;
     title: string;
@@ -46,6 +54,10 @@ const INDEXES: { [name in keyof DbSchema]: [IndexSpecification, CreateIndexesOpt
   workflowExecutions: [
     [{ workflowKey: 1 }, {}],
     [{ executionId: 1 }, {}],
+  ],
+  workflowStates: [
+    [{ workflowKey: 1 }, {}],
+    [{ workflowKey: 1, stepIndex: 1, stateKey: 1 }, { unique: true }],
   ],
   workspaces: [
     [{ key: 1 }, { unique: true }],
