@@ -271,13 +271,13 @@ abstract class RuntimeWorkflowBase {
       this.triggerSocket.addMethod("notifySignal", this.onNotifySignal.bind(this));
       this.triggerSocket.addMethod(
         "getState",
-        async (input: { sessionId: string; key: string } | undefined): Promise<unknown> =>
-          await this.getState(input?.key || "")
+        async (input: { sessionId: string; payload: { key: string } } | undefined): Promise<unknown> =>
+          await this.getState(input?.payload?.key || "")
       );
       this.triggerSocket.addMethod(
         "setState",
-        async (input: { sessionId: string; key: string; value: unknown } | undefined) =>
-          await this.setState(input?.key || "", input?.value)
+        async (input: { sessionId: string; payload: { key: string; value: unknown } } | undefined) =>
+          await this.setState(input?.payload?.key || "", input?.payload?.value)
       );
       try {
         const requestBody = {
@@ -286,6 +286,7 @@ abstract class RuntimeWorkflowBase {
           cdsName,
           credentials: this.workflow.trigger.credentials,
           authentication: this.workflow.trigger.authentication,
+          initStates: await this.getState("initStates"),
           fields,
         };
         debug("Sending setupSignal: ", requestBody);

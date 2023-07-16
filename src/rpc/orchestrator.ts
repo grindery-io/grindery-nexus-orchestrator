@@ -305,6 +305,8 @@ export async function deleteWorkflow({ key }: { key: string }, { context: { user
   } catch (e) {
     console.warn(`[${workflow.key}] Failed to parse workflow: `, e);
   }
+  const stateCollection = await getCollection("workflowStates");
+  await stateCollection.deleteMany({ workflowKey: key });
   track(userAccountId, "Delete Workflow", {
     workflow: key,
     workspace: workflow.workspaceKey,
