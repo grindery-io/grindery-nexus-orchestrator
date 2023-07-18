@@ -43,7 +43,12 @@ import {
   workspaceRemoveAdmin,
   workspaceRemoveUser,
 } from "./rpc/workspace";
-import { listAuthCredentials, updateAuthCredentials, deleteAuthCredentials } from "./rpc/credentials";
+import {
+  listAuthCredentials,
+  updateAuthCredentials,
+  deleteAuthCredentials,
+  putConnectorSecrets,
+} from "./rpc/credentials";
 
 export type Context = {
   user?: TAccessToken;
@@ -127,6 +132,7 @@ export function createServer() {
     listAuthCredentials,
     updateAuthCredentials,
     deleteAuthCredentials,
+    putConnectorSecrets,
   };
   for (const [name, func] of Object.entries(methods)) {
     server.addMethod("or_" + name, forceObject(func));
