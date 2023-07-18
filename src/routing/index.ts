@@ -13,8 +13,9 @@ router.post("/input-provider/:connector/:key", auth, async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
   }
+  const cdsName = req.params.connector;
   const schema: ConnectorSchema | null = await getConnectorSchema(
-    req.params.connector,
+    cdsName,
     String(req.query?._grinderyEnvironment || "production")
   ).catch(() => null);
   if (!schema) {
@@ -36,7 +37,7 @@ router.post("/input-provider/:connector/:key", auth, async (req, res) => {
       .json({ jsonrpc: "2.0", error: { code: 1, message: "Input provider not found" }, id: req.body.id });
   }
   try {
-    const resp = await axios.post(url, req.body);
+    const resp = await axios.post(url, { ...req.body, cdsName });
     return res.status(resp.status).json(resp.data);
   } catch (e) {
     if (e.response) {
