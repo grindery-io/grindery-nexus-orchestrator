@@ -6,12 +6,17 @@ import { ConnectorInput, JsonRpcWebSocket } from "grindery-nexus-common-utils";
 import OAuthRouter from "./oauth";
 import CredentialsRouter from "./credentials";
 import { auth, createAsyncRouter } from "./utils";
+import { JSONRPCRequest } from "json-rpc-2.0";
 
 const router = createAsyncRouter();
 
 router.post("/input-provider/:connector/:key", auth, async (req, res) => {
   if (typeof req.body !== "object") {
     return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: null });
+  }
+  const body = req.body as JSONRPCRequest;
+  if (body.jsonrpc !== "2.0" || !body.params) {
+    return res.status(400).json({ jsonrpc: "2.0", error: { code: -32600, message: "Invalid Request" }, id: body.id });
   }
   const cdsName = req.params.connector;
   const schema: ConnectorSchema | null = await getConnectorSchema(
@@ -37,7 +42,8 @@ router.post("/input-provider/:connector/:key", auth, async (req, res) => {
       .json({ jsonrpc: "2.0", error: { code: 1, message: "Input provider not found" }, id: req.body.id });
   }
   try {
-    const resp = await axios.post(url, { ...req.body, cdsName });
+    body.params["cdsName"] = cdsName;
+    const resp = await axios.post(url, body);
     return res.status(resp.status).json(resp.data);
   } catch (e) {
     if (e.response) {
