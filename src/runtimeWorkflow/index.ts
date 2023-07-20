@@ -187,7 +187,7 @@ abstract class RuntimeWorkflowBase {
         startedAt: Date.now(),
         endedAt: Date.now(),
       });
-      this.track(this.accountId, "Workflow Halted After Too Many Trigger Failures", { workflow: this.key });
+      this.track(this.accountId, "[NEXUS] Flow Halted From Repeat Trigger Error", { workflow: this.key });
       this.stop();
       return;
     }
@@ -308,7 +308,7 @@ abstract class RuntimeWorkflowBase {
           startedAt: Date.now(),
           endedAt: Date.now(),
         });
-        this.track(this.accountId, "Workflow Trigger Setup Error", { workflow: this.key, error: String(e) });
+        this.track(this.accountId, "[NEXUS] Trigger Setup Failed", { workflow: this.key, error: String(e) });
         setTimeout(() => this.setupTrigger().catch((e) => console.error(`[${this.key}] Unexpected failure:`, e)), 1000);
         return;
       }
@@ -335,7 +335,7 @@ export class RuntimeWorkflow extends RuntimeWorkflowBase {
     _track(accountId, event, properties);
   }
   protected async handleSignal(payload: ConnectorOutput) {
-    this.track(this.accountId, "Received Signal", { workflow: this.key });
+    this.track(this.accountId, "[NEXUS] Event Received", { workflow: this.key });
     this.runWorkflow(payload).catch((e) => {
       this.track(this.accountId, "Workflow Error", { workflow: this.key });
       console.error(e);
@@ -414,7 +414,7 @@ export class RuntimeWorkflow extends RuntimeWorkflowBase {
         );
         return;
       }
-      this.track(this.accountId, "Workflow Step Complete", { workflow: this.key, index });
+      this.track(this.accountId, "[NEXUS] Step Completed", { workflow: this.key, index });
       context[`step${index}`] = nextInput;
       await logCollection.updateOne(
         {
@@ -430,7 +430,7 @@ export class RuntimeWorkflow extends RuntimeWorkflowBase {
       );
       index++;
     }
-    this.track(this.accountId, "Workflow Complete", { workflow: this.key });
+    this.track(this.accountId, "[NEXUS] Flow Completed", { workflow: this.key });
     console.debug(`[${this.key}] Completed`);
   }
 }

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AsyncRouter } from "express-async-router";
 import { AccessToken, RefreshToken, TAccessToken, RefreshTokenExtra, TRefreshToken } from "../jwt";
+import { track } from "../tracking";
 
 export function createAsyncRouter() {
   return AsyncRouter({
@@ -36,6 +37,7 @@ export async function tokenResponse(res: Response, subject: string, extra: Refre
     sameSite: "strict",
     secure: true,
   });
+  track(subject, "[NEXUS] User Authenticated", { type: subject.split(":")[0] });
   return res.json({
     access_token: await createAccessTokenFromRefreshToken(refreshTokenData),
     token_type: "bearer",

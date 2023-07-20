@@ -112,7 +112,7 @@ export async function createWorkflow(
   if (enabled) {
     loadWorkflow({ key, workflow, accountId: userAccountId, workspaceKey });
   }
-  track(userAccountId, "Create Workflow", {
+  track(userAccountId, "[NEXUS] Flow Created", {
     workflow: key,
     workspace: workspaceKey,
     role: user && "role" in user ? user.role : undefined,
@@ -409,7 +409,7 @@ export async function testAction(
   }
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  track(userAccountId, "Test Action", { connector: step.connector, action: step.operation, environment });
+  track(userAccountId, "[NEXUS] Action Tested", { connector: step.connector, action: step.operation, environment });
   return await runSingleAction({ step, input, dryRun: true, environment: environment || "production", user });
 }
 
@@ -431,7 +431,11 @@ export async function testTrigger(
   }
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  track(userAccountId, "Test Trigger", { connector: trigger.connector, action: trigger.operation, environment });
+  track(userAccountId, "[NEXUS] Trigger Tested", {
+    connector: trigger.connector,
+    action: trigger.operation,
+    environment,
+  });
   const triggerInstance = new StandaloneWorkflowTrigger(
     `testtrigger-${uuidv4()}`,
     { trigger, actions: [], creator: userAccountId, state: "on", signature: "", title: "" },
@@ -529,7 +533,7 @@ export async function runAction(
   console.log(`runAction: ${step.connector}/${step.operation} (${environment})`);
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  track(userAccountId, "Run Single Action", { connector: step.connector, action: step.operation, environment });
+  track(userAccountId, "[NEXUS] Action Executed", { connector: step.connector, action: step.operation, environment });
   return await runSingleAction({ step, input, dryRun: false, environment: environment || "production", user });
 }
 

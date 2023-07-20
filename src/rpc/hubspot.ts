@@ -68,7 +68,29 @@ export async function isAllowedUser({ app }: { app?: string }, { context: { user
 }
 
 export async function requestEarlyAccess(
-  { email, source, app, interest, skill, firstname, lastname, hutk, pageName, ipAddress }: { email: string; source?: string; app?: string, interest?: string; skill?: string; firstname?: string; lastname?: string; hutk?: string; pageName?: string, ipAddress?: string;},
+  {
+    email,
+    source,
+    app,
+    interest,
+    skill,
+    firstname,
+    lastname,
+    hutk,
+    pageName,
+    ipAddress,
+  }: {
+    email: string;
+    source?: string;
+    app?: string;
+    interest?: string;
+    skill?: string;
+    firstname?: string;
+    lastname?: string;
+    hutk?: string;
+    pageName?: string;
+    ipAddress?: string;
+  },
   { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
@@ -121,7 +143,7 @@ export async function requestEarlyAccess(
         hutk: hutk || undefined,
         pageUri: source || undefined,
         pageName: pageName || undefined,
-        ipAddress: ipAddress || undefined
+        ipAddress: ipAddress || undefined,
       },
       legalConsentOptions: {
         consent: {
@@ -139,7 +161,7 @@ export async function requestEarlyAccess(
     }
   );
   identify(userAccountId, { email });
-  track(userAccountId, "Request Early Access", { email });
+  track(userAccountId, "[NEXUS] Email Captured", { email });
   return true;
 }
 
@@ -255,10 +277,7 @@ export function deleteUserFromCache(userAccountId: string) {
   isUserHasEmailCache.delete(userAccountId);
 }
 
-export async function updateUserEmail(
-  { email }: { email: string; },
-  { context: { user } }: RpcServerParams
-) {
+export async function updateUserEmail({ email }: { email: string }, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   if (!email) {
@@ -277,7 +296,7 @@ export async function updateUserEmail(
             propertyName: "ceramic_did",
             operator: "EQ",
             value: userAccountId,
-          }
+          },
         ],
       },
     ],
@@ -293,7 +312,7 @@ export async function updateUserEmail(
     return false;
   }
   const updateRes = await hubspotClient.crm.contacts.basicApi.update(contact.id, {
-    properties: { email }
+    properties: { email },
   });
   if (updateRes && updateRes.id) {
     track(userAccountId, "Email updated", { email });
@@ -303,10 +322,7 @@ export async function updateUserEmail(
   }
 }
 
-export async function getUserEmail(
-  _,
-  { context: { user } }: RpcServerParams
-) {
+export async function getUserEmail(_, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
@@ -318,7 +334,7 @@ export async function getUserEmail(
             propertyName: "ceramic_did",
             operator: "EQ",
             value: userAccountId,
-          }
+          },
         ],
       },
     ],
@@ -330,10 +346,7 @@ export async function getUserEmail(
   return resp.results?.[0]?.properties?.email || null;
 }
 
-export async function getUserProps(
-  _,
-  { context: { user } }: RpcServerParams
-) {
+export async function getUserProps(_, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
@@ -345,7 +358,7 @@ export async function getUserProps(
             propertyName: "ceramic_did",
             operator: "EQ",
             value: userAccountId,
-          }
+          },
         ],
       },
     ],
@@ -358,7 +371,7 @@ export async function getUserProps(
 }
 
 export async function updateUserProps(
-  { props }: { props: { email?: string; firstname?: string; lastname?: string; interest?: string; skill?: string; }; },
+  { props }: { props: { email?: string; firstname?: string; lastname?: string; interest?: string; skill?: string } },
   { context: { user } }: RpcServerParams
 ) {
   const userAccountId = user?.sub || "";
@@ -379,7 +392,7 @@ export async function updateUserProps(
             propertyName: "ceramic_did",
             operator: "EQ",
             value: userAccountId,
-          }
+          },
         ],
       },
     ],
@@ -395,7 +408,7 @@ export async function updateUserProps(
     return false;
   }
   const updateRes = await hubspotClient.crm.contacts.basicApi.update(contact.id, {
-    properties: props
+    properties: props,
   });
   if (updateRes && updateRes.id) {
     track(userAccountId, "Properties updated", props);
