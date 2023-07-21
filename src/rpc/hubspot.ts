@@ -79,6 +79,7 @@ export async function requestEarlyAccess(
     hutk,
     pageName,
     ipAddress,
+    trackSource,
   }: {
     email: string;
     source?: string;
@@ -90,6 +91,7 @@ export async function requestEarlyAccess(
     hutk?: string;
     pageName?: string;
     ipAddress?: string;
+    trackSource?: string;
   },
   { context: { user } }: RpcServerParams
 ) {
@@ -161,7 +163,7 @@ export async function requestEarlyAccess(
     }
   );
   identify(userAccountId, { email });
-  track(userAccountId, "[NEXUS] Email Captured", { email });
+  track(userAccountId, "[NEXUS] Email Captured", { email, source: trackSource || "unknown" });
   return true;
 }
 

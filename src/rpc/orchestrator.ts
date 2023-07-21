@@ -397,10 +397,12 @@ export async function testAction(
     step,
     input,
     environment,
+    source,
   }: {
     step: OperationSchema;
     input: unknown;
     environment: string;
+    source?: string;
   },
   { context: { user } }: RpcServerParams
 ) {
@@ -409,7 +411,12 @@ export async function testAction(
   }
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  track(userAccountId, "[NEXUS] Action Tested", { connector: step.connector, action: step.operation, environment });
+  track(userAccountId, "[NEXUS] Action Tested", {
+    connector: step.connector,
+    action: step.operation,
+    environment,
+    source: source || "unknown",
+  });
   return await runSingleAction({ step, input, dryRun: true, environment: environment || "production", user });
 }
 
@@ -417,9 +424,11 @@ export async function testTrigger(
   {
     trigger,
     environment,
+    source,
   }: {
     trigger: OperationSchema;
     environment: string;
+    source?: string;
   },
   { context: { user }, connection }: RpcServerParams
 ) {
@@ -435,6 +444,7 @@ export async function testTrigger(
     connector: trigger.connector,
     action: trigger.operation,
     environment,
+    source: source || "unknown",
   });
   const triggerInstance = new StandaloneWorkflowTrigger(
     `testtrigger-${uuidv4()}`,
@@ -520,10 +530,12 @@ export async function runAction(
     step,
     input,
     environment,
+    source,
   }: {
     step: Omit<OperationSchema, "input">;
     input: unknown;
     environment: string;
+    source?: string;
   },
   { context: { user } }: RpcServerParams
 ) {
@@ -533,7 +545,12 @@ export async function runAction(
   console.log(`runAction: ${step.connector}/${step.operation} (${environment})`);
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
-  track(userAccountId, "[NEXUS] Action Executed", { connector: step.connector, action: step.operation, environment });
+  track(userAccountId, "[NEXUS] Action Executed", {
+    connector: step.connector,
+    action: step.operation,
+    environment,
+    source: source || "unknown",
+  });
   return await runSingleAction({ step, input, dryRun: false, environment: environment || "production", user });
 }
 
