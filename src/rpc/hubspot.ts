@@ -348,7 +348,7 @@ export async function getUserEmail(_, { context: { user } }: RpcServerParams) {
   return resp.results?.[0]?.properties?.email || null;
 }
 
-export async function getUserProps(_, { context: { user } }: RpcServerParams) {
+export async function getUserProps({ props }: { props?: string[] }, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
   verifyAccountId(userAccountId);
   const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
@@ -364,7 +364,7 @@ export async function getUserProps(_, { context: { user } }: RpcServerParams) {
         ],
       },
     ],
-    properties: ["email", "firstname", "lastname", "interest", "skill"],
+    properties: props && props.length > 0 ? props : ["email", "firstname", "lastname", "interest", "skill"],
     limit: 1,
     after: 0,
     sorts: [],
