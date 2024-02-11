@@ -156,7 +156,7 @@ router.get("/authorize", async (req, res) => {
       return res.status(400).json({ error: "invalid_request" });
     }
   }
-  const url = new URL(process.env.AUTH_FRONTEND_URL || "https://login.grindery.io/");
+  const url = new URL(process.env.AUTH_FRONTEND_URL || "https://login.grindery.com/");
   for (const key of Object.keys(req.query)) {
     url.searchParams.set(key, String(req.query[key]));
   }

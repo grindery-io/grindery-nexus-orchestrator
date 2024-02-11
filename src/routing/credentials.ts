@@ -27,7 +27,7 @@ type CallbackStateExtra = {
 type TCallbackState = TypedJWTPayload<CallbackStateExtra>;
 const CallbackState = typedCipher<CallbackStateExtra>("urn:grindery:callback-state");
 
-const ALLOWED_REDIRECT_URI = [/^https?:\/\/localhost\b.*$/, /^https:\/\/[^.]+\.grindery\.(io|org)\/.*$/];
+const ALLOWED_REDIRECT_URI = [/^https?:\/\/localhost\b.*$/, /^https:\/\/[^.]+\.grindery\.(io|org|tg|com)\/.*$/];
 
 function getRedirectUri(req: Request): string {
   return `${req.hostname.startsWith("localhost") ? "http" : "https"}://${process.env.HOST || req.get("Host")}${
