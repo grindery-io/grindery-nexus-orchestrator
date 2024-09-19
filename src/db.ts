@@ -86,6 +86,7 @@ export type DbSchema = {
   // This is a temporary collection to store users who have been deleted.
   usersArchive: {
     ceramic_did: string;
+    deletedAt: number; // milliseconds since epoch
   } & {
     [key: string]: any;
   };

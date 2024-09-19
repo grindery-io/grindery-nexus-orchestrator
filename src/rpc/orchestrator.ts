@@ -368,8 +368,12 @@ export async function deleteUser(_, { context: { user } }: RpcServerParams) {
   const userDoc = await usersCollection.findOne({ ceramic_did: userAccountId });
   if (userDoc) {
     const usersArchiveCollection = await getCollection("usersArchive");
-    const insertRes = await usersArchiveCollection.insertOne(userDoc);
-    if (insertRes.insertedId) {
+    const archiveUserRes = await usersArchiveCollection.updateOne(
+      { ceramic_did: userAccountId },
+      { $set: { ...userDoc, deletedAt: Date.now() } },
+      { upsert: true }
+    );
+    if (archiveUserRes.modifiedCount > 0 || archiveUserRes.upsertedCount > 0) {
       await usersCollection.deleteOne({ ceramic_did: userAccountId });
     }
   }
