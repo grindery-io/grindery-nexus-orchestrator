@@ -28,7 +28,7 @@ import {
   getUserEmail,
   getUserProps,
   updateUserProps,
-} from "./rpc/hubspot";
+} from "./rpc/users";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
 import assert from "assert";

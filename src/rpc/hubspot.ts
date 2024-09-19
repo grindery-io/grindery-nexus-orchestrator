@@ -5,6 +5,14 @@ import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { RpcServerParams } from "../jsonrpc";
 import { verifyAccountId } from "./orchestrator";
 
+/**
+ * Important
+ *
+ * HS integration is deprecated.
+ * Use the new users mongodb collection instead.
+ * See src/rpc/users.ts for the new implementation.
+ */
+
 const isAllowedUserCache = new Map<string, boolean | Promise<boolean>>();
 export async function isAllowedUser({ app }: { app?: string }, { context: { user } }: RpcServerParams) {
   const userAccountId = user?.sub || "";
