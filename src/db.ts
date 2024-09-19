@@ -80,6 +80,14 @@ export type DbSchema = {
         }[];
       };
     };
+    nexus_notifications_state?: string;
+    push_notifications_token?: string;
+  };
+  // This is a temporary collection to store users who have been deleted.
+  usersArchive: {
+    ceramic_did: string;
+  } & {
+    [key: string]: any;
   };
 };
 
@@ -113,6 +121,7 @@ const INDEXES: { [name in keyof DbSchema]: [IndexSpecification, CreateIndexesOpt
     [{ early_access__auto___cds_editor_: 1 }, {}],
     [{ doi_confirmed__auto_: 1 }, {}],
   ],
+  usersArchive: [[{ ceramic_did: 1 }, {}]],
 };
 
 async function createIndexes(db: Db) {

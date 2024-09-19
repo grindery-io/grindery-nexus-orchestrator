@@ -14,7 +14,6 @@ import {
   testTrigger,
   updateWorkflow,
   moveWorkflowToWorkspace,
-  saveNotificationsState,
   runAction,
   deleteUser,
   runActionAsync,
@@ -28,6 +27,7 @@ import {
   getUserEmail,
   getUserProps,
   updateUserProps,
+  saveNotificationsState,
 } from "./rpc/users";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";

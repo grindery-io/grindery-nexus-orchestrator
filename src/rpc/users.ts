@@ -293,3 +293,36 @@ export async function updateUserProps(
     return false;
   }
 }
+
+export async function saveNotificationsState(
+  {
+    state,
+    notificationToken,
+  }: {
+    state: string;
+    notificationToken?: string;
+  },
+  { context: { user } }: RpcServerParams
+) {
+  const userAccountId = user?.sub || "";
+  verifyAccountId(userAccountId);
+  if (!state) {
+    throw new InvalidParamsError("Missing notifications state");
+  }
+  const usersCollection = await getCollection("users");
+  await usersCollection.updateOne(
+    {
+      ceramic_did: userAccountId,
+    },
+    {
+      $set: {
+        nexus_notifications_state: state,
+        push_notifications_token: notificationToken,
+      },
+    },
+    {
+      upsert: true,
+    }
+  );
+  return true;
+}

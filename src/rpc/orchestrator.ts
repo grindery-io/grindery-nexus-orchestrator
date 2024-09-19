@@ -1,7 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
 import * as Sentry from "@sentry/node";
-import { Client as HubSpotClient } from "@hubspot/api-client";
-
 import { DbSchema, getCollection } from "../db";
 import { OperationSchema, WorkflowSchema } from "grindery-nexus-common-utils/dist/types";
 import { runSingleAction, RuntimeWorkflow, StandaloneWorkflowTrigger } from "../runtimeWorkflow";
@@ -10,7 +8,7 @@ import { getWorkflowEnvironment } from "../utils";
 import { InvalidParamsError } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { RpcServerParams } from "../jsonrpc";
 import { throwNotFoundOrPermissionError } from "./workspace";
-import { deleteUserFromCache } from "./hubspot";
+import { deleteUserFromCache } from "./users";
 import { deleteAllAuthCredentials } from "./credentials";
 import axios from "axios";
 
@@ -366,28 +364,16 @@ export async function deleteUser(_, { context: { user } }: RpcServerParams) {
   for (const workspace of workspaces) {
     await deleteAllAuthCredentials({}, { context: { user: { ...user, workspace: workspace.key, role: "admin" } } });
   }
-  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
-  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
-    filterGroups: [
-      {
-        filters: [
-          {
-            propertyName: "ceramic_did",
-            operator: "EQ",
-            value: userAccountId,
-          },
-        ],
-      },
-    ],
-    properties: ["email"],
-    limit: 100,
-    after: 0,
-    sorts: [],
-  });
-  deleteUserFromCache(userAccountId);
-  if (resp.results.length > 0) {
-    await hubspotClient.crm.contacts.batchApi.archive({ inputs: resp.results.map((x) => ({ id: x.id })) });
+  const usersCollection = await getCollection("users");
+  const userDoc = await usersCollection.findOne({ ceramic_did: userAccountId });
+  if (userDoc) {
+    const usersArchiveCollection = await getCollection("usersArchive");
+    const insertRes = await usersArchiveCollection.insertOne(userDoc);
+    if (insertRes.insertedId) {
+      await usersCollection.deleteOne({ ceramic_did: userAccountId });
+    }
   }
+  deleteUserFromCache(userAccountId);
   track(userAccountId, "Delete User", {});
   return true;
 }
@@ -476,53 +462,6 @@ export async function testTrigger(
   if (!connection.isOpen) {
     triggerInstance.stop();
   }
-}
-
-export async function saveNotificationsState(
-  {
-    state,
-    notificationToken,
-  }: {
-    state: string;
-    notificationToken?: string;
-  },
-  { context: { user } }: RpcServerParams
-) {
-  const userAccountId = user?.sub || "";
-  verifyAccountId(userAccountId);
-  if (!state) {
-    throw new InvalidParamsError("Missing notifications state");
-  }
-  const hubspotClient = new HubSpotClient({ accessToken: process.env.HS_PRIVATE_TOKEN });
-  const resp = await hubspotClient.crm.contacts.searchApi.doSearch({
-    filterGroups: [
-      {
-        filters: [
-          {
-            propertyName: "ceramic_did",
-            operator: "EQ",
-            value: userAccountId,
-          },
-        ],
-      },
-    ],
-    properties: ["nexus_notifications_state"],
-    limit: 1,
-    after: 0,
-    sorts: [],
-  });
-  const newProps: { [key: string]: string } = {
-    nexus_notifications_state: state,
-  };
-  if (notificationToken) {
-    newProps.push_notifications_token = notificationToken;
-  }
-  if (resp.results[0]) {
-    await hubspotClient.crm.contacts.basicApi.update(resp.results[0].id, { properties: newProps });
-  } else {
-    await hubspotClient.crm.contacts.basicApi.create({ properties: newProps });
-  }
-  return true;
 }
 
 export async function runAction(
