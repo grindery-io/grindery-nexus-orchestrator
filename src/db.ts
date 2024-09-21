@@ -42,6 +42,54 @@ export type DbSchema = {
     updatedAt: number; // milliseconds since epoch
     createdAt: number; // milliseconds since epoch
   };
+  /**
+   * Users collection is a replacement for HS Contacts.
+   *
+   * Properties are copied from HS and don't follow the same naming
+   * convention as other collections, for backward compatibility.
+   */
+  users: {
+    ceramic_did: string;
+    email?: string;
+    firstname?: string;
+    lastname?: string;
+    interest?: string;
+    skill?: string;
+    access_status?: string;
+    wallet_address?: string;
+    early_access__auto___flow_?: boolean;
+    early_access__auto___ping_?: boolean;
+    early_access__auto___gateway_?: boolean;
+    early_access__auto___cds_editor_?: boolean;
+    doi_confirmed__auto_?: boolean;
+    early_access_requested_from?: string;
+    earlyAccessSubmissionContext?: {
+      hutk?: string;
+      pageUri?: string;
+      pageName?: string;
+      ipAddress?: string;
+    };
+    legalConsentOptions?: {
+      consent?: {
+        consentToProcess?: boolean;
+        text?: string;
+        communications?: {
+          value?: boolean;
+          subscriptionTypeId?: number;
+          text?: string;
+        }[];
+      };
+    };
+    nexus_notifications_state?: string;
+    push_notifications_token?: string;
+  };
+  // This is a temporary collection to store users who have been deleted.
+  usersArchive: {
+    ceramic_did: string;
+    deletedAt: number; // milliseconds since epoch
+  } & {
+    [key: string]: any;
+  };
 };
 
 const INDEXES: { [name in keyof DbSchema]: [IndexSpecification, CreateIndexesOptions][] } = {
@@ -64,6 +112,17 @@ const INDEXES: { [name in keyof DbSchema]: [IndexSpecification, CreateIndexesOpt
     [{ admins: 1 }, {}],
     [{ users: 1 }, {}],
   ],
+  users: [
+    [{ ceramic_did: 1 }, { unique: true }],
+    [{ email: 1 }, {}],
+    [{ wallet_address: 1 }, {}],
+    [{ early_access__auto___flow_: 1 }, {}],
+    [{ early_access__auto___ping_: 1 }, {}],
+    [{ early_access__auto___gateway_: 1 }, {}],
+    [{ early_access__auto___cds_editor_: 1 }, {}],
+    [{ doi_confirmed__auto_: 1 }, {}],
+  ],
+  usersArchive: [[{ ceramic_did: 1 }, {}]],
 };
 
 async function createIndexes(db: Db) {

@@ -14,7 +14,6 @@ import {
   testTrigger,
   updateWorkflow,
   moveWorkflowToWorkspace,
-  saveNotificationsState,
   runAction,
   deleteUser,
   runActionAsync,
@@ -28,7 +27,8 @@ import {
   getUserEmail,
   getUserProps,
   updateUserProps,
-} from "./rpc/hubspot";
+  saveNotificationsState,
+} from "./rpc/users";
 import { createJsonRpcServer, forceObject, ServerParams } from "grindery-nexus-common-utils/dist/jsonrpc";
 import { AccessToken, TAccessToken } from "./jwt";
 import assert from "assert";
